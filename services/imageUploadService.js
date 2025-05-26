@@ -35,7 +35,7 @@ class ImageUploadService {
       return uploadedFiles;
     } catch (error) {
       console.error("Error uploading image:", error);
-      throw new AppError("Image upload failed", 500);
+      throw new AppError(`Image upload failed ${JSON.stringify(error)}`, 500);
     }
   }
 }
