@@ -1,0 +1,45 @@
+Types of Reports Typically Includes:
+
+Sales Reports
+
+
+Daily/Weekly/Monthly/Yearly sales summaries
+Sales by product category
+Sales by customer
+Sales performance trends
+Profit margins
+Bestselling products
+
+
+Inventory Reports
+
+
+Current stock levels
+Low stock alerts
+Stock movement history
+Product batch tracking
+Expiry tracking (if applicable)
+Inventory valuation
+
+
+Purchase Reports
+
+
+Purchase order history
+Supplier-wise purchases
+Cost analysis
+Outstanding orders
+Payment history
+
+
+Financial Reports
+
+
+Revenue reports
+Expense tracking
+Cash flow statements
+Profit & loss statements
+
+
+
+

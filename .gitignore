@@ -1,0 +1,8 @@
+node_modules
+uploads/*
+queries.txt
+text.txt
+test.js
+.vs
+views
+.vercel
