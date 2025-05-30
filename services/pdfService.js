@@ -1,7 +1,14 @@
-import PDFDocument from "pdfkit";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 import AWS from "aws-sdk";
 import { v4 as uuidv4 } from "uuid";
-import { Readable } from "stream";
+import fs from "fs";
+import path from "path";
+import os from "os";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure AWS S3
 const s3 = new AWS.S3({
@@ -17,11 +24,31 @@ class PDFService {
 
   // Main method to generate expense report PDF
   async generatePDFReport(data, options) {
+    const storeInfoHTML = this.generateStoreInfoHTML(options.storeInfo);
+
     try {
-      const pdfBuffer = await this.generatePDFFromData(data, options);
+      // Generate HTML content
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${options.title || "Expense Report"}</title>
+          ${this.getCommonStyles()}
+        </head>
+        <body>
+          ${storeInfoHTML}
+          <div class="content">
+           ${data}
+          </div>
+        </body>
+      </html>
+    `;
+
+      const pdfBuffer = await this.generatePDFFromHTML(htmlContent);
       const fileName = `expense-report-${uuidv4()}.pdf`;
 
-      // Upload to S3
+      // Production logic (e.g., upload to S3)
       const url = await this.uploadToS3(pdfBuffer, fileName);
       return { url };
     } catch (error) {
@@ -29,91 +56,118 @@ class PDFService {
     }
   }
 
-  // Generate PDF using PDFKit
-  async generatePDFFromData(data, options) {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ margin: 50 });
-        const buffers = [];
+  // Generate store info header HTML
+  generateStoreInfoHTML(storeInfo) {
+    return `
+      <div class="store-header">
+        <div class="store-info">
+          <h1 class="store-name">${storeInfo.name || "IRFARM"}</h1>
+          <div class="store-details">
+            <p>${storeInfo.address || ""}</p>
+            <p>Phone: ${storeInfo.phone || ""}</p>
+            <p>Email: ${storeInfo.email || ""}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
-        doc.on("data", buffers.push.bind(buffers));
-        doc.on("end", () => {
-          const pdfData = Buffer.concat(buffers);
-          resolve(pdfData);
+  // Get common CSS styles for expense report PDF
+  getCommonStyles() {
+    return `
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.4;
+          color: #333;
+          padding: 20px;
+        }
+        
+        .store-header {
+          background-color: #000;
+          color: white;
+          padding: 20px;
+          margin-bottom: 30px;
+          text-align: center;
+        }
+        
+        .store-name {
+          font-size: 24px;
+          font-weight: bold;
+          margin-bottom: 10px;
+        }
+        
+        .store-details p {
+          margin: 5px 0;
+          font-size: 14px;
+        }
+        
+        .content {
+          margin: 0 20px;
+        }
+        
+        @media print {
+          body {
+            padding: 0;
+          } 
+        }
+      </style>
+    `;
+  }
+
+  // Convert HTML to PDF using Puppeteer
+  async generatePDFFromHTML(htmlContent) {
+    let browser;
+    try {
+      // Different configuration for local vs production
+      if (process.env.NODE_ENV === "development") {
+        // Use regular puppeteer in development
+        const regularPuppeteer = await import("puppeteer");
+        browser = await regularPuppeteer.default.launch({
+          headless: true,
+          args: ["--no-sandbox", "--disable-setuid-sandbox"],
         });
-
-        // Add store header
-        this.addStoreHeader(doc, options.storeInfo);
-
-        // Add content
-        this.addContent(doc, data, options);
-
-        doc.end();
-      } catch (error) {
-        reject(error);
+      } else {
+        // Use puppeteer-core with chromium for production (Vercel)
+        browser = await puppeteer.launch({
+          args: chromium.args,
+          defaultViewport: chromium.defaultViewport,
+          executablePath: await chromium.executablePath(),
+          headless: chromium.headless,
+          ignoreHTTPSErrors: true,
+        });
       }
-    });
-  }
 
-  // Add store header to PDF
-  addStoreHeader(doc, storeInfo) {
-    // Black background rectangle
-    doc.rect(0, 0, doc.page.width, 120).fill("#000000");
-
-    // Store name
-    doc
-      .fillColor("#FFFFFF")
-      .fontSize(24)
-      .font("Helvetica-Bold")
-      .text(storeInfo.name || "IRFARM", 50, 30, { align: "center" });
-
-    // Store details
-    doc
-      .fontSize(12)
-      .font("Helvetica")
-      .text(storeInfo.address || "", 50, 65, { align: "center" })
-      .text(`Phone: ${storeInfo.phone || ""}`, 50, 80, { align: "center" })
-      .text(`Email: ${storeInfo.email || ""}`, 50, 95, { align: "center" });
-
-    // Reset color and move down
-    doc.fillColor("#000000");
-    doc.y = 150;
-  }
-
-  // Add main content to PDF
-  addContent(doc, data, options) {
-    // Title
-    doc
-      .fontSize(18)
-      .font("Helvetica-Bold")
-      .text(options.title || "Expense Report", 50, doc.y, { align: "left" });
-
-    doc.moveDown(2);
-
-    // Convert HTML data to plain text or parse specific content
-    // This is a simple example - you might need to parse your HTML data
-    const textContent = this.htmlToText(data);
-
-    doc
-      .fontSize(12)
-      .font("Helvetica")
-      .text(textContent, 50, doc.y, {
-        width: doc.page.width - 100,
-        align: "left",
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, {
+        waitUntil: "networkidle0",
       });
-  }
 
-  // Simple HTML to text conversion
-  htmlToText(html) {
-    // Remove HTML tags and decode entities
-    return html
-      .replace(/<[^>]*>/g, "") // Remove HTML tags
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .trim();
+      const pdfBuffer = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: {
+          top: "20px",
+          right: "20px",
+          bottom: "20px",
+          left: "20px",
+        },
+      });
+
+      return pdfBuffer;
+    } catch (error) {
+      throw new Error(`PDF generation error: ${error.message}`);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
   }
 
   // Upload PDF buffer to S3
@@ -124,6 +178,7 @@ class PDFService {
         Key: `pdfs/${fileName}`,
         Body: pdfBuffer,
         ContentType: "application/pdf",
+        // ACL: "public-read", // Make file publicly accessible
       };
 
       const result = await s3.upload(uploadParams).promise();
@@ -134,4 +189,5 @@ class PDFService {
   }
 }
 
+// Export singleton instance
 export default new PDFService();
