@@ -6,6 +6,8 @@ import AppError from "../utils/apiError.js";
 import { CompanyCreditTransactionModel } from "../models/companyAccountModel.js";
 import notificationService from "./notificationService.js";
 import uniqueCodeModel from "../models/uniqueCodeModel.js";
+import purchaseModel from "../models/purchaseModel.js";
+import productModel from "../models/productModel.js";
 
 class CompanyService {
   async createCompany(req, companyData) {
@@ -221,6 +223,33 @@ class CompanyService {
 
   async deleteCompany(req, filterQuery) {
     const query = this._buildQueryWithStoreAccess(req, { _id: filterQuery.id });
+
+    // Check if customer has any transactions
+    let transactionCount = 0;
+
+    transactionCount = await purchaseModel.countDocuments({
+      supplier: filterQuery.id,
+    });
+
+    // If transactions exist, prevent deletion
+    if (transactionCount > 0) {
+      throw new AppError(
+        "This Supplier cannot be deleted because they have transaction history.",
+        400
+      );
+    }
+
+    transactionCount = await productModel.countDocuments({
+      company: filterQuery.id,
+    });
+    // If products exist, prevent deletion
+    if (transactionCount > 0) {
+      throw new AppError(
+        "This Company cannot be deleted because they have products associated with them.",
+        400
+      );
+    }
+
     return await Company.findOneAndDelete(query);
   }
 

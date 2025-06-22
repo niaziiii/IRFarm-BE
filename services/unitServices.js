@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Unit from "../models/unitModel.js";
 import AppError from "../utils/apiError.js";
+import productModel from "../models/productModel.js";
 
 class UnitService {
   async createUnit(req, unitData) {
@@ -65,6 +66,20 @@ class UnitService {
 
   async deleteUnit(req, filterQuery) {
     const query = this._buildQueryWithStoreAccess(req, { _id: filterQuery.id });
+
+    let transactionCount = await productModel.countDocuments({
+      "unit_profile.unit": filterQuery.id, // or mongoose.Types.ObjectId(filterQuery.id)
+    });
+    console.log({ transactionCount, qq: filterQuery.id });
+
+    // If transactions exist, prevent deletion
+    if (transactionCount > 0) {
+      throw new AppError(
+        "This Unit cannot be deleted because products are associated with them.",
+        400
+      );
+    }
+
     return await Unit.findOneAndDelete(query);
   }
 
