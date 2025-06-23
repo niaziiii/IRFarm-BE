@@ -5,8 +5,6 @@ import validateRequest from "../middleware/validateMiddleware.js";
 import User from "../controllers/userController.js";
 import allowedOnlyTo from "../middleware/allowedOnlyTo.js";
 
-// router.post("/create-admin", User.createAdmin);
-
 router.use(allowedOnlyTo("super_admin", "manager", "user"));
 router.get("/managers", allowedOnlyTo("super_admin"), User.findManagers);
 router.get("/single/:id", User.findUser);

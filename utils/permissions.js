@@ -9,6 +9,7 @@ export const defaultPermissions = {
     store: { add: true, delete: true, edit: true, view: true },
     user: { add: true, delete: true, edit: true, view: true },
     report: { add: true, delete: true, edit: true, view: true },
+    salePerson: { add: true, delete: true, edit: true, view: true },
   },
   manager: {
     product: { add: true, delete: true, edit: true, view: true },
@@ -20,6 +21,7 @@ export const defaultPermissions = {
     user: { add: true, delete: true, edit: true, view: true },
     unit: { add: true, delete: true, edit: true, view: true },
     report: { add: true, delete: true, edit: true, view: true },
+    salePerson: { add: true, delete: true, edit: true, view: true },
   },
   user: {
     product: { add: true, delete: false, edit: true, view: true },
@@ -31,5 +33,6 @@ export const defaultPermissions = {
     user: { add: false, delete: false, edit: false, view: false },
     unit: { add: true, delete: false, edit: true, view: true },
     report: { add: true, delete: true, edit: true, view: true },
+    salePerson: { add: true, delete: false, edit: true, view: true },
   },
 };

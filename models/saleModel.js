@@ -97,6 +97,11 @@ const SaleSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    salePerson: {
+      type: mongoose.Schema.ObjectId,
+      ref: "SalePerson",
+      default: null,
+    },
   },
   { timestamps: true }
 );

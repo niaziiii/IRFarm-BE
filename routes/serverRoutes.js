@@ -23,6 +23,7 @@ import reportsRoutes from "./reportRoutes.js";
 import expenseRoutes from "./expenseRoute.js";
 import cashInCounterRoute from "./cashInCounterRoutes.js";
 import pdfRoutes from "./pdfRoutes.js";
+import salePersonRoute from "./salePersonRoute.js";
 
 //Auth routes
 router.use("/api/v1/auth", authRoute);
@@ -89,5 +90,7 @@ router.use("/api/v1/cash-counter", cashInCounterRoute);
 
 //PDF routes
 router.use("/api/v1/pdf", pdfRoutes);
+
+router.use("/api/v1/sale-person", salePersonRoute);
 
 export default router;

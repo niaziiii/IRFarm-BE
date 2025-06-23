@@ -23,6 +23,7 @@ const PermissionsSchema = new mongoose.Schema(
     store: ModulePermissionSchema,
     user: ModulePermissionSchema,
     report: ModulePermissionSchema,
+    salePerson: ModulePermissionSchema,
   },
   { _id: false }
 );
