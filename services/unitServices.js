@@ -68,11 +68,10 @@ class UnitService {
     const query = this._buildQueryWithStoreAccess(req, { _id: filterQuery.id });
 
     let transactionCount = await productModel.countDocuments({
-      "unit_profile.unit": filterQuery.id, // or mongoose.Types.ObjectId(filterQuery.id)
+      "unit_profile.unit": filterQuery.id,  
     });
     console.log({ transactionCount, qq: filterQuery.id });
 
-    // If transactions exist, prevent deletion
     if (transactionCount > 0) {
       throw new AppError(
         "This Unit cannot be deleted because products are associated with them.",

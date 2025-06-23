@@ -10,6 +10,7 @@ router.use(allowedOnlyTo("super_admin", "manager", "user"));
 router.get("/list", Category.findAllCategories);
 router.post("/filtered-list", Category.filteredCategoryList);
 router.get("/single/:id", Category.findCategory);
+router.post("/products", Category.findCategoryProducts);
 
 // For routes where only super_admin and manager have access, create a sub-router
 router.post(

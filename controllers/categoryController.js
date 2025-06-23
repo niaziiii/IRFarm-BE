@@ -64,6 +64,11 @@ const categoryStats = catchAsync(async (req, res, next) => {
   return successResponse(res, stats);
 });
 
+const findCategoryProducts = catchAsync(async (req, res, next) => {
+  const products = await categoryService.findCategoryProducts(req, req.params);
+  return successResponse(res, products);
+});
+
 export default {
   createCategory,
   findCategory,
@@ -72,4 +77,5 @@ export default {
   deleteCategory,
   filteredCategoryList,
   categoryStats,
+  findCategoryProducts,
 };

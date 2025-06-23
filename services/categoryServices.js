@@ -317,6 +317,16 @@ class CategoryService {
       total === 0 ? "0%" : ((part / total) * 100).toFixed(2) + "%";
     return percentage;
   }
+
+  findCategoryProducts(req) {
+    const category = req.body.category;
+
+    const query = {
+      category: category ? mongoose.Types.ObjectId(category) : null,
+    };
+
+    return Product.find(query);
+  }
 }
 
 export default new CategoryService();
