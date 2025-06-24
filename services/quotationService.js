@@ -238,6 +238,7 @@ class QuotationService {
         inventory_checks: inventoryChecks,
         customer_credit_check: customerCreditCheck,
       },
+      salePerson: data.salePerson ?? "",
     };
 
     const quotation = await QuotationModel.create(quotationData);
@@ -580,6 +581,7 @@ class QuotationService {
         note: `Created from quotation #${quotation.quotation_number}. ${
           quotation.note || ""
         }`,
+        salePerson: quotation.salePerson ?? "",
         date: quotation.date, // Use current date for the actual sale
       };
 

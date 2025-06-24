@@ -1174,6 +1174,10 @@ class SaleService {
       query["payment_type.type"] = filterQuery.payment_type;
     }
 
+    if (filterQuery.salePerson) {
+      query.salePerson = filterQuery.salePerson;
+    }
+
     if (filterQuery.payment_status) {
       query.payment_status = filterQuery.payment_status;
     }

@@ -41,7 +41,9 @@ const deleteCompany = catchAsync(async (req, res, next) => {
   await notificationService.sendNotification(
     {
       title: "Company Deleted",
-      message: `${company.name} has been deleted from store by ${req.user.name}.`,
+      message: `${company.name ?? ""} has been deleted from store by ${
+        req.user.name
+      }.`,
       type: "DELETE",
     },
     req.user._id

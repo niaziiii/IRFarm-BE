@@ -4,6 +4,7 @@ import Product from "../models/productModel.js";
 import SaleModel from "../models/saleModel.js";
 import AppError from "../utils/apiError.js";
 import productModel from "../models/productModel.js";
+import { BatchInventoryModel } from "../models/batchInventoryModel.js";
 
 class CategoryService {
   async createCategory(req, categoryData) {
@@ -35,19 +36,13 @@ class CategoryService {
   }
 
   async findAllCategories(req, filterQuery) {
-    // Destructure status and order from request body with default values
     const { status = "all", order = "asc" } = filterQuery;
 
-    // Construct filter query based on status
     let query = status === "active" || status === "inactive" ? { status } : {};
-
-    // Add store access restrictions
     query = this._buildQueryWithStoreAccess(req, query);
 
-    // Determine sort parameters based on order
     const sortOptions = { name: order === "asc" ? 1 : -1 };
 
-    // Fetch categories matching the filter and sort criteria
     const categories = await Category.find(query, {
       _id: 1,
       name: 1,
@@ -56,26 +51,31 @@ class CategoryService {
       store_id: 1,
     }).sort(sortOptions);
 
-    // Enhanced categories with product information
     const enhancedCategories = await Promise.all(
       categories.map(async (category) => {
-        // Find all products in this category
+        // Find all products in this category and store
         const products = await Product.find({
           category: category._id,
           store_id: req.user.store_id,
-        });
+        }).select("_id");
 
-        // Calculate total product count
+        const productIds = products.map((p) => p._id);
+
+        // Find all batch inventories for these products
+        const batches = await BatchInventoryModel.find({
+          product_id: { $in: productIds },
+          store_id: req.user.store_id,
+        }).select("purchase_price current_quantity");
+
+        // Calculate total product count and total value from batches
         const totalProduct = products.length;
 
-        // Calculate total value based on purchase_price * quantity for each product
-        const value = products.reduce((sum, product) => {
-          const price = product.purchase_price || 0;
-          const quantity = product.quantity || 0;
+        const value = batches.reduce((sum, batch) => {
+          const price = batch.purchase_price || 0;
+          const quantity = batch.current_quantity || 0;
           return sum + price * quantity;
         }, 0);
 
-        // Return category with added fields
         return {
           ...category.toObject(),
           totalProduct,

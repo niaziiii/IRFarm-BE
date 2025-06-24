@@ -19,7 +19,7 @@ router.post("/list", Store.findAllStores);
 router.put("/edit/:id", Store.updateStore);
 
 router.use(allowedOnlyTo("super_admin"));
-router.post("/create", validateRequest(storeSchema), Store.createStore);
+router.post("/create", Store.createStore);
 router.delete("/delete/:id", Store.deleteStore);
 router.get("/available", Store.findAvailableStores); //not-enrolled stores
 

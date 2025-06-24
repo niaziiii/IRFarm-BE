@@ -76,6 +76,11 @@ const QuotationSchema = new mongoose.Schema(
       converted_date: { type: Date },
       converted_by: { type: mongoose.Schema.ObjectId, ref: "User" },
     },
+    salePerson: {
+      type: mongoose.Schema.ObjectId,
+      ref: "SalePerson",
+      default: null,
+    },
     verification_details: {
       inventory_checks: [Object],
       customer_credit_check: Object,
@@ -95,6 +100,8 @@ QuotationSchema.pre("find", function (next) {
     { path: "customer", select: "name contact_no image account" },
     { path: "store_id", select: "name address" },
     { path: "added_by", select: "name image role" },
+    { path: "salePerson", select: "name image" },
+
     {
       path: "quotation_items.product_id",
       select: "prod_name prod_code sku images maximum_retail_price",
