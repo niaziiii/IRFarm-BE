@@ -1,11 +1,3 @@
-// utils/pdf-reports/financialOverview.js
-
-const formatDate = (dateString) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-GB");
-};
-
 const formatAmount = (amount) => {
   if (amount === undefined || amount === null) return "0.00";
   return Number(amount)
@@ -194,33 +186,28 @@ const getStyles = () => {
 };
 
 const generateSummaryCards = (data) => {
-  const netCashFlow =
-    (data.revenue.cash || 0) -
-    (data.costs.breakdown.purchases.cash || 0) -
-    (data.costs.breakdown.expenses.cash || 0);
-
   return `
       <div class="summary-grid">
         <div class="summary-card">
           <div class="summary-label">Total Revenue</div>
           <div class="summary-value profit-positive">PKR ${formatAmount(
-            data.revenue.total
+            data?.revenue?.total
           )}</div>
         </div>
         <div class="summary-card">
           <div class="summary-label">Total Costs</div>
           <div class="summary-value profit-negative">PKR ${formatAmount(
-            data.costs.total
+            data?.costs?.total
           )}</div>
         </div>
         <div class="summary-card">
           <div class="summary-label">Net Profit/Loss</div>
           <div class="summary-value ${
-            data.profitAnalysis.netProfit < 0
+            data?.profitAnalysis?.netProfit < 0
               ? "profit-negative"
               : "profit-positive"
           }">
-            PKR ${formatAmount(Math.abs(data.profitAnalysis.netProfit))}
+            PKR ${formatAmount(Math.abs(data?.profitAnalysis?.netProfit))}
           </div>
         </div>
       </div>
@@ -229,10 +216,10 @@ const generateSummaryCards = (data) => {
 
 const generateRevenueSection = (data) => {
   const hasRevenue =
-    data.revenue &&
-    (data.revenue.total > 0 ||
-      data.revenue.cash > 0 ||
-      data.revenue.credit > 0);
+    data?.revenue &&
+    (data?.revenue?.total > 0 ||
+      data?.revenue?.cash > 0 ||
+      data?.revenue?.credit > 0);
 
   if (!hasRevenue) return "";
 
@@ -244,33 +231,33 @@ const generateRevenueSection = (data) => {
             <tr>
               <td class="detail-label">Cash Sales</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.revenue.cash
+                data?.revenue?.cash
               )}</td>
             </tr>
             <tr>
               <td class="detail-label">Credit Sales</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.revenue.credit
+                data?.revenue?.credit
               )}</td>
             </tr>
             ${
-              data.shippingCharges?.breakdown?.fromSales > 0
+              data?.shippingCharges?.breakdown?.fromSales > 0
                 ? `
             <tr>
               <td class="detail-label">Shipping Charges</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.shippingCharges.breakdown.fromSales
+                data?.shippingCharges?.breakdown?.fromSales
               )}</td>
             </tr>`
                 : ""
             }
             ${
-              data.discounts?.total > 0
+              data?.discounts?.total > 0
                 ? `
             <tr>
               <td class="detail-label">Less: Discounts</td>
               <td class="detail-value profit-negative">-PKR ${formatAmount(
-                data.discounts.total
+                data?.discounts?.total
               )}</td>
             </tr>`
                 : ""
@@ -278,7 +265,7 @@ const generateRevenueSection = (data) => {
             <tr class="total-row">
               <td class="detail-label">Total Revenue</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.revenue.total
+                data?.revenue?.total
               )}</td>
             </tr>
           </table>
@@ -288,7 +275,7 @@ const generateRevenueSection = (data) => {
 };
 
 const generateCostsSection = (data) => {
-  const hasCosts = data.costs && data.costs.total > 0;
+  const hasCosts = data?.costs && data?.costs?.total > 0;
 
   if (!hasCosts) return "";
 
@@ -298,70 +285,70 @@ const generateCostsSection = (data) => {
         <div class="section-content">
           <table class="detail-table">
             ${
-              data.costs.breakdown.purchases.total > 0
+              data?.costs?.breakdown?.purchases?.total > 0
                 ? `
             <tr>
               <td class="detail-label">Purchase Costs</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.costs.breakdown.purchases.total
+                data?.costs?.breakdown?.purchases?.total
               )}</td>
             </tr>`
                 : ""
             }
             ${
-              data.costs.breakdown.purchases.cash > 0 ||
-              data.costs.breakdown.purchases.credit > 0
+              data?.costs?.breakdown?.purchases?.cash > 0 ||
+              data?.costs?.breakdown?.purchases?.credit > 0
                 ? `
             <tr>
               <td class="detail-label sub-detail">• Cash Purchases</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.costs.breakdown.purchases.cash
+                data?.costs?.breakdown?.purchases?.cash
               )}</td>
             </tr>
             <tr>
               <td class="detail-label sub-detail">• Credit Purchases</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.costs.breakdown.purchases.credit
+                data?.costs?.breakdown?.purchases?.credit
               )}</td>
             </tr>`
                 : ""
             }
             ${
-              data.shippingCharges?.breakdown?.fromPurchases > 0
+              data?.shippingCharges?.breakdown?.fromPurchases > 0
                 ? `
             <tr>
               <td class="detail-label">Purchase Shipping</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.shippingCharges.breakdown.fromPurchases
+                data?.shippingCharges?.breakdown?.fromPurchases
               )}</td>
             </tr>`
                 : ""
             }
             ${
-              data.costs.breakdown.expenses.total > 0
+              data?.costs?.breakdown?.expenses?.total > 0
                 ? `
             <tr>
               <td class="detail-label">Operating Expenses</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.costs.breakdown.expenses.total
+                data?.costs?.breakdown?.expenses?.total
               )}</td>
             </tr>`
                 : ""
             }
             ${
-              data.costs.breakdown.expenses.cash > 0 ||
-              data.costs.breakdown.expenses.credit > 0
+              data?.costs?.breakdown?.expenses?.cash > 0 ||
+              data?.costs?.breakdown?.expenses?.credit > 0
                 ? `
             <tr>
               <td class="detail-label sub-detail">• Cash Expenses</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.costs.breakdown.expenses.cash
+                data?.costs?.breakdown?.expenses?.cash
               )}</td>
             </tr>
             <tr>
               <td class="detail-label sub-detail">• Credit Expenses</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.costs.breakdown.expenses.credit
+                data?.costs?.breakdown?.expenses?.credit
               )}</td>
             </tr>`
                 : ""
@@ -369,7 +356,7 @@ const generateCostsSection = (data) => {
             <tr class="total-row">
               <td class="detail-label">Total Costs</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.costs.total
+                data?.costs?.total
               )}</td>
             </tr>
           </table>
@@ -379,7 +366,7 @@ const generateCostsSection = (data) => {
 };
 
 const generateProfitAnalysisSection = (data) => {
-  if (!data.profitAnalysis) return "";
+  if (!data?.profitAnalysis) return "";
 
   return `
       <div class="section-box section-full">
@@ -389,38 +376,38 @@ const generateProfitAnalysisSection = (data) => {
             <tr>
               <td class="detail-label">Gross Revenue</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.profitAnalysis.grossRevenue
+                data?.profitAnalysis?.grossRevenue
               )}</td>
             </tr>
             <tr>
               <td class="detail-label">Net Revenue</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.profitAnalysis.netRevenue
+                data?.profitAnalysis?.netRevenue
               )}</td>
             </tr>
             <tr>
               <td class="detail-label">Gross Profit/Loss</td>
               <td class="detail-value ${
-                data.profitAnalysis.grossProfit < 0
+                data?.profitAnalysis?.grossProfit < 0
                   ? "profit-negative"
                   : "profit-positive"
               }">
-                PKR ${formatAmount(Math.abs(data.profitAnalysis.grossProfit))}
+                PKR ${formatAmount(Math.abs(data?.profitAnalysis?.grossProfit))}
               </td>
             </tr>
             <tr class="total-row">
               <td class="detail-label">
                 Net Profit/Loss
                 <span class="profit-margin">(Margin: ${
-                  data.profitAnalysis.profitMargin
+                  data?.profitAnalysis?.profitMargin
                 }%)</span>
               </td>
               <td class="detail-value ${
-                data.profitAnalysis.netProfit < 0
+                data?.profitAnalysis?.netProfit < 0
                   ? "profit-negative"
                   : "profit-positive"
               }">
-                PKR ${formatAmount(Math.abs(data.profitAnalysis.netProfit))}
+                PKR ${formatAmount(Math.abs(data?.profitAnalysis?.netProfit))}
               </td>
             </tr>
           </table>
@@ -430,7 +417,7 @@ const generateProfitAnalysisSection = (data) => {
 };
 
 const generateShippingSection = (data) => {
-  if (!data.shippingCharges || data.shippingCharges.total === 0) return "";
+  if (!data?.shippingCharges || data?.shippingCharges?.total === 0) return "";
 
   return `
       <div class="section-box">
@@ -438,23 +425,23 @@ const generateShippingSection = (data) => {
         <div class="section-content">
           <table class="detail-table">
             ${
-              data.shippingCharges.breakdown.fromSales > 0
+              data?.shippingCharges?.breakdown?.fromSales > 0
                 ? `
             <tr>
               <td class="detail-label">From Sales</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.shippingCharges.breakdown.fromSales
+                data?.shippingCharges?.breakdown?.fromSales
               )}</td>
             </tr>`
                 : ""
             }
             ${
-              data.shippingCharges.breakdown.fromPurchases > 0
+              data?.shippingCharges?.breakdown?.fromPurchases > 0
                 ? `
             <tr>
               <td class="detail-label">From Purchases</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.shippingCharges.breakdown.fromPurchases
+                data?.shippingCharges?.breakdown?.fromPurchases
               )}</td>
             </tr>`
                 : ""
@@ -462,7 +449,7 @@ const generateShippingSection = (data) => {
             <tr class="total-row">
               <td class="detail-label">Total Shipping</td>
               <td class="detail-value">PKR ${formatAmount(
-                data.shippingCharges.total
+                data?.shippingCharges?.total
               )}</td>
             </tr>
           </table>
@@ -472,7 +459,7 @@ const generateShippingSection = (data) => {
 };
 
 const generateTransactionSummary = (data) => {
-  const purchaseTransactions = data.costs?.breakdown?.purchases?.transactions;
+  const purchaseTransactions = data?.costs?.breakdown?.purchases?.transactions;
 
   if (!purchaseTransactions) return "";
 
@@ -492,8 +479,8 @@ const generateTransactionSummary = (data) => {
 };
 
 export const generateFinancialOverviewReportHTML = (data, options) => {
-  const dateRange = data.date
-    ? `${data.date.startDate} - ${data.date.endDate}`
+  const dateRange = data?.date
+    ? `${data?.date?.startDate} - ${data?.date?.endDate}`
     : "All Time";
 
   // Generate sections based on available data

@@ -126,23 +126,23 @@ class PDFService {
     let browser;
     try {
       // Different configuration for local vs production
-      // if (process.env.NODE_ENV === "development") {
-      //   // Use regular puppeteer in development
-      //   const regularPuppeteer = await import("puppeteer");
-      //   browser = await regularPuppeteer.default.launch({
-      //     headless: true,
-      //     args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      //   });
-      // } else {
-      // Use puppeteer-core with chromium for production (Vercel)
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
-        ignoreHTTPSErrors: true,
-      });
-      // }
+      if (process.env.NODE_ENV === "development") {
+        // Use regular puppeteer in development
+        const regularPuppeteer = await import("puppeteer");
+        browser = await regularPuppeteer.default.launch({
+          headless: true,
+          args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        });
+      } else {
+        // Use puppeteer-core with chromium for production (Vercel)
+        browser = await puppeteer.launch({
+          args: chromium.args,
+          defaultViewport: chromium.defaultViewport,
+          executablePath: await chromium.executablePath(),
+          headless: chromium.headless,
+          ignoreHTTPSErrors: true,
+        });
+      }
 
       const page = await browser.newPage();
       await page.setContent(htmlContent, {
