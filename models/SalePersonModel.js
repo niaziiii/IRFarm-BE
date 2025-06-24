@@ -27,18 +27,18 @@ const SalePersonSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-function autoPopulateRefs(next) {
-  this.populate({
-    path: "store_id",
-    select: "name _id image",
-  });
+// function autoPopulateRefs(next) {
+//   this.populate({
+//     path: "store_id",
+//     select: "name _id image",
+//   });
 
-  next();
-}
+//   next();
+// }
 
-SalePersonSchema.pre("find", autoPopulateRefs)
-  .pre("findOne", autoPopulateRefs)
-  .pre("findOneAndUpdate", autoPopulateRefs);
+// SalePersonSchema.pre("find", autoPopulateRefs)
+//   .pre("findOne", autoPopulateRefs)
+//   .pre("findOneAndUpdate", autoPopulateRefs);
 
 const SalePersonModel = mongoose.model("SalePerson", SalePersonSchema);
 export default SalePersonModel;

@@ -48,18 +48,18 @@ Store.pre("remove", async function (next) {
 });
 
 // Add middleware to limit populated fields
-function populateWithLimitedFields(next) {
-  this.populate({
-    path: "created_by",
-    select: "name _id image email", // Only select essential fields
-  });
+// function populateWithLimitedFields(next) {
+//   this.populate({
+//     path: "created_by",
+//     select: "name _id image email", // Only select essential fields
+//   });
 
-  next();
-}
+//   next();
+// }
 
 // Apply middleware to find and findOne operations
-Store.pre("find", populateWithLimitedFields);
-Store.pre("findOne", populateWithLimitedFields);
-Store.pre("findOneAndUpdate", populateWithLimitedFields);
+// Store.pre("find", populateWithLimitedFields);
+// Store.pre("findOne", populateWithLimitedFields);
+// Store.pre("findOneAndUpdate", populateWithLimitedFields);
 
 export default mongoose.model("Store", Store);

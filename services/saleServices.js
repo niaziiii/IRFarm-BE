@@ -974,6 +974,7 @@ class SaleService {
         added_by: request.user._id,
         date: data.date || new Date(),
         customer_source: data.customer_source || "",
+        salePerson: data.salePerson || "",
       };
 
       const sale = await SaleModel.create([saleData], { session });
@@ -1212,6 +1213,10 @@ class SaleService {
         select: "name customer_type contact_no cnic image account",
       })
       .populate({
+        path: "salePerson",
+        select: "name image",
+      })
+      .populate({
         path: "sale_items.product_id",
         select:
           "prod_name prod_code sku type maximum_retail_price actual_retail_price whole_sale_price company category images",
@@ -1237,6 +1242,7 @@ class SaleService {
         date: sale.date,
         sale_type: sale.sale_type,
         customer_source: sale.customer_source,
+        salePerson: sale.salePerson,
         sale_items: sale.sale_items,
         discount_value: sale.discount_value,
         shipping_charges: sale.shipping_charges,

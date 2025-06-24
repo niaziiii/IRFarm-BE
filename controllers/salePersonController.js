@@ -1,6 +1,7 @@
 import SalePerson from "../models/SalePersonModel.js";
 import AppError from "../utils/apiError.js";
 import catchAsync from "../utils/catchAsync.js";
+import { getStatusCounts } from "../utils/getStatusCounts.js";
 import { successResponse } from "../utils/responseFormat.js";
 
 export const addSalePerson = catchAsync(async (req, res) => {
@@ -14,10 +15,27 @@ export const addSalePerson = catchAsync(async (req, res) => {
 });
 
 export const getAllSalePersons = catchAsync(async (req, res) => {
-  const filter =
-    req.user.role === "super_admin" ? {} : { store_id: req.user.store_id };
-  const salePersons = await SalePerson.find(filter);
-  return successResponse(res, salePersons);
+  let filters = {};
+
+  const filter_query = req.body.filter_query || {};
+
+  if (req.user.role !== "super_admin") {
+    filters.store_id = req.user.store_id;
+  }
+
+  if (filter_query.status) {
+    filters.status = filter_query.status;
+  }
+  if (filter_query.status == "all" && filters.status) {
+    delete filters.status;
+  }
+
+  const salePersons = await SalePerson.find(filters).populate({
+    path: "store_id",
+    select: "name address",
+  });
+  const count = await getStatusCounts(req, SalePerson);
+  return successResponse(res, salePersons, count);
 });
 
 export const getSalePerson = catchAsync(async (req, res) => {
