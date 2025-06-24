@@ -3,6 +3,7 @@ import Category from "../models/categoryModel.js";
 import Product from "../models/productModel.js";
 import SaleModel from "../models/saleModel.js";
 import AppError from "../utils/apiError.js";
+import productModel from "../models/productModel.js";
 
 class CategoryService {
   async createCategory(req, categoryData) {
@@ -88,6 +89,7 @@ class CategoryService {
 
   async updateCategory(req, filterQuery, categoryData) {
     const query = this._buildQueryWithStoreAccess(req, { _id: filterQuery.id });
+
     return await Category.findOneAndUpdate(
       query,
       { $set: categoryData },
@@ -97,6 +99,20 @@ class CategoryService {
 
   async deleteCategory(req, filterQuery) {
     const query = this._buildQueryWithStoreAccess(req, { _id: filterQuery.id });
+
+    // Check if has any history
+    let transactionCount = 0;
+
+    transactionCount = await productModel.countDocuments({
+      category: filterQuery.id,
+    });
+    // If products exist, prevent deletion
+    if (transactionCount > 0) {
+      throw new AppError(
+        "This Category cannot be deleted because they have products associated with them.",
+        400
+      );
+    }
     return await Category.findOneAndDelete(query);
   }
 

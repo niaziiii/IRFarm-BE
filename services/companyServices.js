@@ -224,14 +224,14 @@ class CompanyService {
   async deleteCompany(req, filterQuery) {
     const query = this._buildQueryWithStoreAccess(req, { _id: filterQuery.id });
 
-    // Check if customer has any transactions
+    // Check if has any history
     let transactionCount = 0;
 
     transactionCount = await purchaseModel.countDocuments({
       supplier: filterQuery.id,
     });
 
-    // If transactions exist, prevent deletion
+    // If history exist, prevent deletion
     if (transactionCount > 0) {
       throw new AppError(
         "This Supplier cannot be deleted because they have transaction history.",
