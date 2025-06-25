@@ -6,7 +6,10 @@ const router = express.Router();
 router.post("/expense", pdfController.generateExpenseReport);
 router.post("/sale", pdfController.generateSaleReport);
 router.post("/purchase", pdfController.generatePurchaseReport);
+
 router.post("/customer-ladger", pdfController.generateCustomerLadgerReport);
+router.post("/customer-list", pdfController.generateCustomerList);
+
 router.post("/supplier-ladger", pdfController.generateSupplierLadgerReport);
 router.post("/product-ladger", pdfController.generateProductLadgerReport);
 router.post("/product-list", pdfController.generateProductListReport);

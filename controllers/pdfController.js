@@ -11,6 +11,7 @@ import { generateSupplierLadgerReportHTML } from "../utils/pdf-reports/supplierL
 import { generateSingleProductLadgerReportHTML } from "../utils/pdf-reports/product.js";
 import { generateProductListReportHTML } from "../utils/pdf-reports/productList.js";
 import { generateFinancialOverviewReportHTML } from "../utils/pdf-reports/financialOverview.js";
+import { generateCustomerListReportHTML } from "../utils/pdf-reports/customerList.js";
 
 const generateExpenseReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
@@ -148,6 +149,23 @@ const generateFinancialOverviewReport = catchAsync(async (req, res, next) => {
   return successResponse(res, pdfResult);
 });
 
+const generateCustomerList = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
+
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "Customer List"
+  );
+
+  const html = generateCustomerListReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
+
 export default {
   generateExpenseReport,
   generateSaleReport,
@@ -157,4 +175,5 @@ export default {
   generateProductLadgerReport,
   generateProductListReport,
   generateFinancialOverviewReport,
+  generateCustomerList,
 };
