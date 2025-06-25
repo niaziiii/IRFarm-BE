@@ -12,6 +12,8 @@ import { generateSingleProductLadgerReportHTML } from "../utils/pdf-reports/prod
 import { generateProductListReportHTML } from "../utils/pdf-reports/productList.js";
 import { generateFinancialOverviewReportHTML } from "../utils/pdf-reports/financialOverview.js";
 import { generateCustomerListReportHTML } from "../utils/pdf-reports/customerList.js";
+import { generateCompanyListReportHTML } from "../utils/pdf-reports/companyList.js";
+import { generateSaleListReportHTML } from "../utils/pdf-reports/saleList.js";
 
 const generateExpenseReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
@@ -165,7 +167,39 @@ const generateCustomerList = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
+const generateCompanyList = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
 
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "Company List"
+  );
+
+  const html = generateCompanyListReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
+
+const generateSaleListReports = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
+
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "Sales List"
+  );
+
+  const html = generateSaleListReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
 export default {
   generateExpenseReport,
   generateSaleReport,
@@ -176,4 +210,6 @@ export default {
   generateProductListReport,
   generateFinancialOverviewReport,
   generateCustomerList,
+  generateCompanyList,
+  generateSaleListReports,
 };
