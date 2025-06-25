@@ -6,6 +6,7 @@ const Product = new mongoose.Schema(
     status: { type: String, enum: ["active", "inactive"], default: "active" },
     sku: { type: String, required: false }, // barcode
     maximum_retail_price: { type: Number, default: 0, min: 0 },
+    minimum_retail_price: { type: Number, default: 0, min: 0 },
     actual_retail_price: { type: Number, default: 0, min: 0 },
     margin_in_percentage: { type: String, default: "" },
     expiry_date_alert: { type: Date, default: null },
