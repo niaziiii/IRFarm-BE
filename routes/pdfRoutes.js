@@ -6,6 +6,7 @@ const router = express.Router();
 router.post("/expense", pdfController.generateExpenseReport);
 router.post("/sale", pdfController.generateSaleReport);
 router.post("/purchase", pdfController.generatePurchaseReport);
+router.post("/quotation", pdfController.generateQuotationReport);
 
 router.post("/sales-report", pdfController.generateSaleListReports);
 router.post("/customer-ladger", pdfController.generateCustomerLadgerReport);

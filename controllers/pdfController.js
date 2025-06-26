@@ -18,6 +18,7 @@ import { generateCategoryListReportHTML } from "../utils/pdf-reports/categoryLis
 import { generateUserListReportHTML } from "../utils/pdf-reports/userList.js";
 import { generateUnitListReportHTML } from "../utils/pdf-reports/unitList.js";
 import { generateQuotationListReportHTML } from "../utils/pdf-reports/quotationList.js";
+import { generateQuotationReportHTML } from "../utils/pdf-reports/quotation.js";
 
 const generateExpenseReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
@@ -262,6 +263,23 @@ const generateQuotationListReport = catchAsync(async (req, res, next) => {
   return successResponse(res, pdfResult);
 });
 
+const generateQuotationReport = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
+
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "quotations"
+  );
+
+  const html = generateQuotationReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
+
 export default {
   generateExpenseReport,
   generateSaleReport,
@@ -278,4 +296,5 @@ export default {
   generateUserList,
   generateUnitList,
   generateQuotationListReport,
+  generateQuotationReport,
 };
