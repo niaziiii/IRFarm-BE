@@ -16,6 +16,11 @@ router.post(
   "/financial-overview",
   pdfController.generateFinancialOverviewReport
 );
+router.post(
+  "/purchase-history",
+  pdfController.generatePurchaseHistoryOverviewReport
+);
+router.post("/sale-history", pdfController.generateSaleHistoryOverviewReport);
 
 router.post("/customer-list", pdfController.generateCustomerList);
 router.post("/category-list", pdfController.generateCategoryList);
