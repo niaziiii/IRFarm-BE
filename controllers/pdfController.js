@@ -14,6 +14,10 @@ import { generateFinancialOverviewReportHTML } from "../utils/pdf-reports/financ
 import { generateCustomerListReportHTML } from "../utils/pdf-reports/customerList.js";
 import { generateCompanyListReportHTML } from "../utils/pdf-reports/companyList.js";
 import { generateSaleListReportHTML } from "../utils/pdf-reports/saleList.js";
+import { generateCategoryListReportHTML } from "../utils/pdf-reports/categoryList.js";
+import { generateUserListReportHTML } from "../utils/pdf-reports/userList.js";
+import { generateUnitListReportHTML } from "../utils/pdf-reports/unitList.js";
+import { generateQuotationListReportHTML } from "../utils/pdf-reports/quotationList.js";
 
 const generateExpenseReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
@@ -31,7 +35,6 @@ const generateExpenseReport = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generateSaleReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -48,7 +51,6 @@ const generateSaleReport = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generatePurchaseReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -65,7 +67,6 @@ const generatePurchaseReport = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generateCustomerLadgerReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -82,7 +83,6 @@ const generateCustomerLadgerReport = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generateSupplierLadgerReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -99,7 +99,6 @@ const generateSupplierLadgerReport = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generateProductLadgerReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -116,7 +115,6 @@ const generateProductLadgerReport = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generateProductListReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -133,7 +131,6 @@ const generateProductListReport = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generateFinancialOverviewReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -150,7 +147,6 @@ const generateFinancialOverviewReport = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generateCustomerList = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -183,7 +179,6 @@ const generateCompanyList = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
-
 const generateSaleListReports = catchAsync(async (req, res, next) => {
   const { data } = req.body;
   if (!data) {
@@ -200,6 +195,73 @@ const generateSaleListReports = catchAsync(async (req, res, next) => {
   const pdfResult = await pdfService.generatePDFReport(html, options);
   return successResponse(res, pdfResult);
 });
+const generateCategoryList = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
+
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "Category List"
+  );
+
+  const html = generateCategoryListReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
+
+const generateUserList = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
+
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "User's List"
+  );
+
+  const html = generateUserListReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
+
+const generateUnitList = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
+
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "Unit's List"
+  );
+
+  const html = generateUnitListReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
+const generateQuotationListReport = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
+
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "quotations List"
+  );
+
+  const html = generateQuotationListReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
+
 export default {
   generateExpenseReport,
   generateSaleReport,
@@ -212,4 +274,8 @@ export default {
   generateCustomerList,
   generateCompanyList,
   generateSaleListReports,
+  generateCategoryList,
+  generateUserList,
+  generateUnitList,
+  generateQuotationListReport,
 };

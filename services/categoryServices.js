@@ -56,7 +56,6 @@ class CategoryService {
         // Find all products in this category and store
         const products = await Product.find({
           category: category._id,
-          store_id: req.user.store_id,
         }).select("_id");
 
         const productIds = products.map((p) => p._id);
@@ -64,7 +63,6 @@ class CategoryService {
         // Find all batch inventories for these products
         const batches = await BatchInventoryModel.find({
           product_id: { $in: productIds },
-          store_id: req.user.store_id,
         }).select("purchase_price current_quantity");
 
         // Calculate total product count and total value from batches
