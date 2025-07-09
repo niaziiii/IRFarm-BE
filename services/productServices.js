@@ -323,11 +323,14 @@ class ProductService {
       })
         .populate({
           path: "purchase_id",
-          select: "purchase_number date",
+          select: "purchase_number date supplier",
+          populate: {
+            path: "supplier",
+            select: "name _id contact_no email_address",
+          },
         })
         .sort({ createdAt: 1 });
 
-      // Get all transactions for this product (EXCLUDING purchase transactions to avoid duplicates)
       const transactions = await InventoryTransactionModel.aggregate([
         {
           $lookup: {
@@ -354,6 +357,16 @@ class ProductService {
             localField: "reference_id",
             foreignField: "_id",
             as: "sale",
+            pipeline: [
+              {
+                $lookup: {
+                  from: "customers",
+                  localField: "customer",
+                  foreignField: "_id",
+                  as: "customer_details",
+                },
+              },
+            ],
           },
         },
         {
@@ -362,6 +375,16 @@ class ProductService {
             localField: "reference_id",
             foreignField: "_id",
             as: "purchase",
+            pipeline: [
+              {
+                $lookup: {
+                  from: "companies",
+                  localField: "supplier",
+                  foreignField: "_id",
+                  as: "supplier_details",
+                },
+              },
+            ],
           },
         },
         {
@@ -406,6 +429,16 @@ class ProductService {
 
         runningTotal += batch.initial_quantity;
 
+        // Extract supplier information
+        const supplierInfo = purchaseDetails.supplier
+          ? {
+              name: purchaseDetails.supplier.name,
+              _id: purchaseDetails.supplier._id,
+              contact: purchaseDetails.supplier.contact_no?.[0] || "N/A",
+              email: purchaseDetails.supplier.email_address || "N/A",
+            }
+          : null;
+
         ledgerEntries.push({
           date: batch.createdAt,
           invoice_number: purchaseDetails.purchase_number,
@@ -417,6 +450,8 @@ class ProductService {
           type: "purchase",
           batch_number: batch.batch_number,
           profit_loss: 0, // No profit/loss on purchases
+          reference: supplierInfo, // Added supplier reference
+          reference_type: "supplier",
         });
       }
 
@@ -425,6 +460,8 @@ class ProductService {
         let invoiceNumber = "N/A";
         let price = 0;
         let profitLoss = 0;
+        let reference = null;
+        let referenceType = null;
 
         // Calculate price and profit/loss based on transaction type
         if (transaction.transaction_type === "sale" && transaction.sale) {
@@ -442,6 +479,26 @@ class ProductService {
               profitLoss =
                 Math.abs(transaction.quantity) *
                 (saleItem.sale_price - transaction.purchase_price);
+
+              // Extract customer information
+              const customerDetails = transaction.sale.customer_details?.[0];
+              if (customerDetails) {
+                reference = {
+                  name: customerDetails.name,
+                  _id: customerDetails._id,
+                  phone: customerDetails.phone || "N/A",
+                  email: customerDetails.email || "N/A",
+                };
+                referenceType = "customer";
+              } else {
+                reference = {
+                  name: "Walk-in Customer",
+                  _id: null,
+                  phone: "N/A",
+                  email: "N/A",
+                };
+                referenceType = "customer";
+              }
             }
           }
         } else if (
@@ -456,18 +513,42 @@ class ProductService {
             invoiceNumber = purchase.purchase_number;
             price = transaction.purchase_price;
             profitLoss = 0; // No profit/loss on purchase returns
+
+            // Extract supplier information from purchase
+            const supplierDetails = transaction.purchase.supplier_details?.[0];
+            if (supplierDetails) {
+              reference = {
+                name: supplierDetails.name,
+                _id: supplierDetails._id,
+                contact: supplierDetails.contact_no?.[0] || "N/A",
+                email: supplierDetails.email_address || "N/A",
+              };
+              referenceType = "supplier";
+            }
           }
         } else if (transaction.transaction_type === "adjustment") {
           // Handle inventory adjustments
           invoiceNumber = "ADJUSTMENT";
           price = transaction.purchase_price || 0;
           profitLoss = 0;
+          reference = {
+            name: "System Adjustment",
+            _id: null,
+            type: "adjustment",
+          };
+          referenceType = "system";
         } else if (transaction.transaction_type === "damage") {
           // Handle damaged goods
           invoiceNumber = "DAMAGE";
           price = transaction.purchase_price || 0;
           profitLoss =
             -Math.abs(transaction.quantity) * (transaction.purchase_price || 0); // Loss due to damage
+          reference = {
+            name: "Damaged Goods",
+            _id: null,
+            type: "damage",
+          };
+          referenceType = "system";
         }
 
         // Update running total (note: sale quantities are negative, returns are positive)
@@ -484,6 +565,8 @@ class ProductService {
           type: transaction.transaction_type,
           batch_number: transaction.batch_number,
           profit_loss: profitLoss,
+          reference: reference,
+          reference_type: referenceType,
         });
       }
 

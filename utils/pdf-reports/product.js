@@ -6,15 +6,6 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("en-GB");
 };
 
-const formatTime = (dateString) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
 const getStyles = () => {
   return `
       <style>
@@ -323,6 +314,9 @@ const generateTransactionsTableHTML = (data) => {
           <tr>
             <td>${dateTime}</td>
             <td>${invoiceNumber}</td>
+            <td>${transaction?.reference?.name || "N/A"} <small>(${
+        transaction.reference_type
+      })</small></td>
             <td class="transaction-type ${transactionTypeClass}">${
         transaction.type
       }</td>
@@ -352,6 +346,7 @@ const generateTransactionsTableHTML = (data) => {
             <tr>
               <th>Date</th>
               <th>Invoice</th>
+              <th>Reference</th>
               <th>Type</th> 
               <th>Price</th>
               <th>In</th>
