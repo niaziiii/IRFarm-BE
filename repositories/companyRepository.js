@@ -107,9 +107,15 @@ class CompanyRepository extends AbstractRepository {
           prod_name: "$product_details.prod_name",
           prod_code: "$product_details.prod_code",
           minimum_sale_price: "$product_details.minimum_sale_price",
-          margin_in_percentage: "$product_details.margin_in_percentage",
-          profit_calculate_in_rupees:
-            "$product_details.profit_calculate_in_rupees",
+          // margin_in_percentage: "$product_details.margin_in_percentage",
+          // profit_calculate_in_rupees:
+          // "$product_details.profit_calculate_in_rupees",
+          profit: {
+            retail_price: {
+              percentage: "$product_details.profit.retail_price.percentage",
+              rupees: "$product_details.profit.retail_price.rupees",
+            },
+          },
           sku: "$product_details.sku",
           batch_code: "$product_details.batch_code",
           expire_date: "$product_details.expire_date",
