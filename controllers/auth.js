@@ -4,32 +4,49 @@ import { successResponse } from "../utils/responseFormat.js";
 import localStrategy from "../config/localStrategy.js";
 import getJwtToken from "../utils/getJwtToken.js";
 import authService from "../services/authService.js";
+import storeModel from "../models/storeModel.js";
 // import { permissions } from "../utils/permissions.js";
 
 const login = catchAsync(async (req, res, next) => {
-  localStrategy.authenticate("local", { session: false }, (err, user, info) => {
-    if (err || !user) {
-      return next(new AppError(info.message, 401));
+  localStrategy.authenticate(
+    "local",
+    { session: false },
+    async (err, user, info) => {
+      if (err || !user) {
+        return next(new AppError(info.message, 401));
+      }
+
+      if (user.status !== "active") {
+        return next(
+          new AppError(
+            "Your account is inactive. Please contact an administrator.",
+            401
+          )
+        );
+      }
+
+      if (user.role !== "super_admin") {
+        const store = await storeModel.findById(user.store_id);
+        if (store.status == "inactive") {
+          return next(
+            new AppError(
+              "Your store is currently unavailable. Please contact an administrator.",
+              401
+            )
+          );
+        }
+      }
+
+      // Sign JWT token
+      const token = getJwtToken(user);
+
+      return successResponse(res, {
+        token,
+        user,
+        permissions: user.permissions,
+      });
     }
-
-    if (user.status !== "active") {
-      return next(
-        new AppError(
-          "Your account is inactive. Please contact an administrator.",
-          401
-        )
-      );
-    }
-
-    // Sign JWT token
-    const token = getJwtToken(user);
-
-    return successResponse(res, {
-      token,
-      user,
-      permissions: user.permissions,
-    });
-  })(req, res, next);
+  )(req, res, next);
 });
 
 const authenticate = catchAsync(async (req, res, next) => {

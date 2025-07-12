@@ -4,6 +4,7 @@ import AppError from "../utils/apiError.js";
 const Store = new mongoose.Schema(
   {
     name: { type: String, unique: true, required: true },
+    status: { type: String, enum: ["active", "inactive"], default: "active" },
     description: { type: String, required: false, default: "" },
     image: { type: String, default: "" },
     address: {
