@@ -18,6 +18,14 @@ const Product = new mongoose.Schema(
         percentage: { type: String, default: "" },
         rupees: { type: String, default: "" },
       },
+      minimum_retail_price: {
+        percentage: { type: String, default: "" },
+        rupees: { type: String, default: "" },
+      },
+      maximum_retail_price: {
+        percentage: { type: String, default: "" },
+        rupees: { type: String, default: "" },
+      },
     },
     minimum_stock_alert: { type: Number, default: 0 },
     quantity: { type: Number, default: 0, min: 0 },

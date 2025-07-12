@@ -184,6 +184,16 @@ class StoreRepository extends AbstractRepository {
               percentage: "$product_details.profit.retail_price.percentage",
               rupees: "$product_details.profit.retail_price.rupees",
             },
+            minimum_retail_price: {
+              percentage:
+                "$product_details.profit.minimum_retail_price.percentage",
+              rupees: "$product_details.profit.minimum_retail_price.rupees",
+            },
+            maximum_retail_price: {
+              percentage:
+                "$product_details.profit.maximum_retail_price.percentage",
+              rupees: "$product_details.profit.maximum_retail_price.rupees",
+            },
           },
           sku: "$product_details.sku",
           batch_code: "$product_details.batch_code",
