@@ -56,6 +56,10 @@ const SaleSchema = new mongoose.Schema(
     shipping_charges: { type: Number, default: 0 },
     discount_value: { type: Number, default: 0 },
     grand_total: { type: Number, required: true },
+    is_loss_sale: {
+      type: Boolean,
+      default: false,
+    },
     payment_type: {
       type: { type: String, required: false }, // now: 'cash', 'credit', or 'split'
       cash: {

@@ -879,6 +879,7 @@ class SaleService {
         sale_type = "sale",
         ...data
       } = request.body;
+      let isLossSale = false;
 
       if (
         !sold_items ||
@@ -934,6 +935,10 @@ class SaleService {
               400
             );
           }
+
+          if (item.sale_price < product.purchase_price) {
+            isLossSale = true;
+          }
         }
       }
 
@@ -975,6 +980,7 @@ class SaleService {
         date: data.date || new Date(),
         customer_source: data.customer_source || "",
         salePerson: data.salePerson || "",
+        is_loss_sale: isLossSale,
       };
 
       const sale = await SaleModel.create([saleData], { session });
@@ -1250,7 +1256,7 @@ class SaleService {
         sale_items: sale.sale_items,
         discount_value: sale.discount_value,
         shipping_charges: sale.shipping_charges,
-
+        is_loss_sale: sale.is_loss_sale,
         grand_total: sale.grand_total,
         payment_type: sale.payment_type,
         customer_account_details: sale.customer_account_details,
