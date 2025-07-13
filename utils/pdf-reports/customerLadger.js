@@ -367,7 +367,6 @@ export const generateCustomerLadgerReportHTML = (data, options) => {
           </div> 
         </div>
         
-        ${summarySectionHTML}
         ${transactionsTableHTML} 
       </div>
     `;
