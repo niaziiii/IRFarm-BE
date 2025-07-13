@@ -137,6 +137,11 @@ const getStyles = () => {
           color: #0066cc;
         }
         
+        .ledger-table .narration-column {
+  width: 300px; /* Adjust as needed */
+}
+
+
         .total-row td {
           font-weight: bold;
           border-top: 2px solid #000;
@@ -167,53 +172,6 @@ const formatAmount = (amount) => {
   return Number(amount).toFixed(2);
 };
 
-const generateSummarySection = (data) => {
-  const creditLimit = data.summary?.credit_limit || 0;
-  const usedAmount = data.summary?.used_amount || 0;
-  const balance = (data.summary?.balance || 0) - data.summary?.used_amount;
-  const availableCredit = creditLimit - usedAmount;
-
-  return `
-      <div class="summary-box">
-        <div class="summary-title">Account Summary</div>
-        <div class="summary-grid">
-          <div class="summary-item">
-            <div class="summary-label">Cash Used</div>
-            <div class="summary-value">PKR ${formatAmount(
-              data.summary?.total_cash_used || 0
-            )}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Credit Used</div>
-            <div class="summary-value negative">PKR ${formatAmount(
-              data.summary?.total_credit_used || 0
-            )}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Credit Limit</div>
-            <div class="summary-value">PKR ${formatAmount(creditLimit)}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Current Balance</div>
-            <div class="summary-value primary">PKR ${formatAmount(
-              balance
-            )}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Available Credit</div>
-            <div class="summary-value positive">PKR ${formatAmount(
-              availableCredit
-            )}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Total Transactions</div>
-            <div class="summary-value">${data.transactions?.length || 0}</div>
-          </div>
-        </div>
-      </div>
-    `;
-};
-
 const generateTransactionsTableHTML = (data) => {
   if (
     !data.transactions ||
@@ -235,24 +193,39 @@ const generateTransactionsTableHTML = (data) => {
         ? `${formatDate(transaction.date)} ${formatTime(transaction.date)}`
         : "";
 
-      // Format transaction narrative
-      let narration = "";
-      if (transaction.transaction_type === "sale") {
-        const saleNumber =
-          transaction.sale_id?.sale_number?.split("-").pop() || "";
-        if (transaction.payment_type === "credit") {
-          narration = `Invoice# ${saleNumber} - Bill<br><span style="font-size:11px">Desc: credit purchase</span>`;
-        } else if (transaction.payment_type === "split") {
-          narration = `Invoice# ${saleNumber} - Bill<br><span style="font-size:11px">Desc: split payment</span>`;
-        } else {
-          narration = `Invoice# ${saleNumber} - Bill<br><span style="font-size:11px">Desc: cash payment</span>`;
-        }
+      let narrationHTML = "";
+      // Render sale items if available
+      if (transaction.sale_id?.sale_items?.length > 0) {
+        narrationHTML = `
+    <div style="font-size:11px;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="border-bottom:1px solid #ddd;">Product</th>
+            <th style="border-bottom:1px solid #ddd; text-align:right;">Qty</th>
+            <th style="border-bottom:1px solid #ddd; text-align:right;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${transaction.sale_id.sale_items
+            .map((item) => {
+              return `
+                <tr>
+                  <td>${item.product_id?.prod_name || "-"}</td>
+                  <td style="text-align:right;">${item.quantity}</td>
+                  <td style="text-align:right;">${formatAmount(
+                    item.sale_price
+                  )}</td>
+                </tr>
+              `;
+            })
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
       } else {
-        narration = `${
-          transaction.transaction_type || "Transaction"
-        }<br><span style="font-size:11px">Desc: ${
-          transaction.note || ""
-        }</span>`;
+        narrationHTML = `<div style="font-size:11px;">No Sale Items</div>`;
       }
 
       // Determine cash/credit amounts based on payment type
@@ -286,7 +259,6 @@ const generateTransactionsTableHTML = (data) => {
         <tr>
           <td>${transaction.added_by?.name || "Admin"}</td>
           <td>${dateTime}</td>
-          <td>${narration}</td>
           <td class="amount-column">${
             cashAmount > 0 ? `PKR ${formatAmount(cashAmount)}` : "-"
           }</td>
@@ -294,6 +266,8 @@ const generateTransactionsTableHTML = (data) => {
             creditAmount > 0 ? `PKR ${formatAmount(creditAmount)}` : "-"
           }</td>
           <td class="balance-column">PKR ${balance}</td>
+         <td class="narration-column">${narrationHTML}</td>
+
         </tr>
       `;
     })
@@ -309,10 +283,10 @@ const generateTransactionsTableHTML = (data) => {
           <tr>
             <th>User</th>
             <th>Date</th>
-            <th>Narration</th>
             <th>Cash</th>
             <th>Credit</th>
             <th>Balance</th>
+            <th>Narration</th>
           </tr>
         </thead>
         <tbody>
@@ -331,14 +305,10 @@ const generateTransactionsTableHTML = (data) => {
 export const generateCustomerLadgerReportHTML = (data, options) => {
   // Extract customer and transaction data
   const customerData = data.customer || {};
-  const summaryData = data.summary || {};
   const date = data.date;
 
   let startDate = date.startDate;
   let endDate = date.endDate;
-
-  // Generate the summary section HTML
-  const summarySectionHTML = generateSummarySection(data);
 
   // Generate the transactions table HTML
   const transactionsTableHTML = generateTransactionsTableHTML(data);

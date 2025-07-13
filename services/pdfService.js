@@ -61,6 +61,9 @@ class PDFService {
     return `
       <div class="store-header">
         <div class="store-info">
+          <img  src="${storeInfo.logo || ""}" alt="${
+      storeInfo.name || "IRFARM"
+    } Logo" class="store-logo" style="max-width: 100px; height: 100px;" />
           <h1 class="store-name">${storeInfo.name || "IRFARM"}</h1>
           <div class="store-details">
             <p>${storeInfo.address || ""}</p>
@@ -90,10 +93,10 @@ class PDFService {
         }
         
         .store-header {
-          background-color: #000;
-          color: white;
-          padding: 20px;
-          margin-bottom: 30px;
+          background-color: #3EB5AF;
+          color: black;
+          padding: 10px;
+          margin-bottom: 20px;
           text-align: center;
         }
         

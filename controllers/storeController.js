@@ -47,19 +47,28 @@ const storeProductsStats = catchAsync(async (req, res, next) => {
 });
 
 export const getStoreInfo = async (storeId, role, title) => {
-  return {
-    role: "user",
-    title: title,
-    storeInfo: {
-      name: "name",
-      address: "addres",
-      phone: "store.phone",
-      email: " store.email",
-    },
-  };
+  // return {
+  //   role: "user",
+  //   title: title,
+  //   storeInfo: {
+  //     name: "name",
+  //     address: "addres",
+  //     phone: "store.phone",
+  //     email: " store.email",
+  //   },
+  // };
 
   if (!storeId || !role || !title) {
-    throw new AppError("storeId || role || title are missing.", 400);
+    return {
+      role: "Unknown",
+      title: title || "Unknown",
+      storeInfo: {
+        name: "Unknown Store",
+        address: "Unknown Address",
+        phone: "Unknown Phone",
+        email: "Unknown Email",
+      },
+    };
   }
 
   if (role === "super_admin") {
@@ -90,6 +99,7 @@ export const getStoreInfo = async (storeId, role, title) => {
         store.address.country,
       phone: store.phone,
       email: store.email,
+      logo: store.image,
     },
   };
 };

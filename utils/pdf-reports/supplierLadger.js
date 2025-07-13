@@ -105,6 +105,10 @@ const getStyles = () => {
           margin-bottom: 3px;
         }
         
+       .ledger-table .narration-column {
+          width: 300px;
+        }
+
         .summary-value {
           font-size: 16px;
           font-weight: 500;
@@ -218,55 +222,6 @@ const formatAmount = (amount) => {
   return Number(amount).toFixed(2);
 };
 
-const generateSummarySection = (data) => {
-  // Extract values exactly as in CompanyHistory
-  const creditLimit = data.summary?.credit_limit || 0;
-  const usedAmount = data.summary?.used_amount || 0;
-  const balance = data.summary?.balance || 0;
-  const netBalance = balance - usedAmount;
-
-  return `
-      <div class="summary-box">
-        <div class="summary-header">
-          <div class="summary-title">Account Summary</div>
-        </div>
-        
-        <div class="summary-grid">
-          <div class="summary-item">
-            <p class="summary-label">Cash Used</p>
-            <p class="summary-value text-blue">PKR ${formatAmount(
-              data.summary?.total_cash_used || 0
-            )}</p>
-          </div>
-        <div class="summary-item">
-          <p class="summary-label">Credit Used</p>
-          <p class="summary-value text-red">PKR ${formatAmount(
-            data.summary?.total_credit_used || 0
-          )}</p>
-        </div>
-        <div class="summary-item">
-            <p class="summary-label">Credit Limit</p>
-            <p class="summary-value text-gray">PKR ${formatAmount(
-              data.summary?.credit_limit || 0
-            )}</p>
-        </div>
-        <div class="summary-item">
-               <p class="summary-label">Current Balance</p>
-               <p class="summary-value text-green">PKR ${formatAmount(
-                 data.summary?.balance - data.summary?.used_amount || 0
-               )}</p>
-        </div>
-        <div class="summary-item">
-               <p class="summary-label">Available Credit</p>
-               <p class="summary-value text-gray">PKR ${formatAmount(
-                 data.summary?.credit_limit - data.summary?.used_amount || 0
-               )}</p>
-        </div> 
-        </div>
-      </div>
-    `;
-};
-
 const generateTransactionsTableHTML = (data) => {
   if (
     !data.transactions ||
@@ -287,6 +242,43 @@ const generateTransactionsTableHTML = (data) => {
       const dateTime = transaction.date
         ? `${formatDate(transaction.date)} ${formatTime(transaction.date)}`
         : "";
+
+      const purchasedProducts = transaction.purchase_id?.order_items || [];
+
+      let narrationHTML = "";
+      // Render sale items if available
+      if (transaction.purchase_id?.order_items?.length > 0) {
+        narrationHTML = `
+    <div style="font-size:11px;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="border-bottom:1px solid #ddd;">Product</th>
+            <th style="border-bottom:1px solid #ddd; text-align:right;">Qty</th>
+            <th style="border-bottom:1px solid #ddd; text-align:right;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${transaction.purchase_id?.order_items
+            .map((item) => {
+              return `
+                <tr>
+                  <td>${item.product_id?.prod_name || "-"}</td>
+                  <td style="text-align:right;">${item.quantity}</td>
+                  <td style="text-align:right;">${formatAmount(
+                    item.purchase_price
+                  )}</td>
+                </tr>
+              `;
+            })
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+      } else {
+        narrationHTML = `<div style="font-size:11px;">No Sale Items</div>`;
+      }
 
       // Format transaction narrative exactly matching CompanyHistory logic
       let narrationTitle = "";
@@ -343,10 +335,6 @@ const generateTransactionsTableHTML = (data) => {
           <tr>
             <td>${transaction.added_by?.name || ""}</td>
             <td>${dateTime}</td>
-            <td class="narration-column">
-              <div class="narration-title">${narrationTitle}</div>
-              <div class="narration-desc">Desc: ${narrationDesc}</div>
-            </td>
             <td class="amount-column">${
               cashAmount > 0 ? `PKR ${formatAmount(cashAmount)}` : "-"
             }</td>
@@ -356,6 +344,7 @@ const generateTransactionsTableHTML = (data) => {
             <td class="balance-column">PKR ${formatAmount(
               transaction.remaining_balance
             )}</td>
+            <td class="narration-column">${narrationHTML}</td>
           </tr>
         `;
     })
@@ -375,10 +364,10 @@ const generateTransactionsTableHTML = (data) => {
             <tr>
               <th>User</th>
               <th>Date</th>
-              <th>Narration</th>
               <th>Cash</th>
               <th>Credit</th>
               <th>Balance</th>
+              <th>Narration</th>
             </tr>
           </thead>
           <tbody>
@@ -401,9 +390,6 @@ export const generateSupplierLadgerReportHTML = (data, options) => {
 
   // Get the date range from the data
   const dateFilter = data.date || { startDate: "", endDate: "" };
-
-  // Generate the summary section HTML with the isCredit flag and dateFilter
-  const summarySectionHTML = generateSummarySection(data);
 
   // Generate the transactions table HTML
   const transactionsTableHTML = generateTransactionsTableHTML(data);
@@ -455,7 +441,6 @@ export const generateSupplierLadgerReportHTML = (data, options) => {
           </div>
         </div>
         
-        ${summarySectionHTML}
         ${transactionsTableHTML}
         
         <div class="footer">
