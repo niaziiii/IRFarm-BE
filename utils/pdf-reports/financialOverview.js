@@ -273,6 +273,29 @@ const generateRevenueSection = (data) => {
       </div>
     `;
 };
+const generateCashInCounterSection = (data) => {
+  const amount = data?.cashInHand;
+  const cash = amount?.cash || 0;
+  const credit = amount?.credit || 0;
+
+  return `
+      <div class="section-box">
+        <div class="section-header">Cash In Counter</div>
+        <div class="section-content">
+          <table class="detail-table">
+            <tr>
+              <td class="detail-label">Cash Amount</td>
+              <td class="detail-value">PKR ${formatAmount(cash)}</td>
+            </tr>
+            <tr>
+              <td class="detail-label">Credit Amount</td>
+              <td class="detail-value">PKR ${formatAmount(credit)}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    `;
+};
 
 const generateCostsSection = (data) => {
   const hasCosts = data?.costs && data?.costs?.total > 0;
@@ -490,12 +513,17 @@ export const generateFinancialOverviewReportHTML = (data, options) => {
   const transactionSection = generateTransactionSummary(data);
   const profitAnalysisSection = generateProfitAnalysisSection(data);
   const summaryCards = generateSummaryCards(data);
+  const cashInCounterSection = generateCashInCounterSection(data);
 
   // Determine if we need a two-column layout
   const hasMultipleSmallSections =
-    [revenueSection, costsSection, shippingSection, transactionSection].filter(
-      (section) => section !== ""
-    ).length >= 2;
+    [
+      revenueSection,
+      costsSection,
+      shippingSection,
+      transactionSection,
+      cashInCounterSection,
+    ].filter((section) => section !== "").length >= 2;
 
   return `${getStyles()}
       <div class="report-container">
@@ -533,6 +561,7 @@ export const generateFinancialOverviewReportHTML = (data, options) => {
           }
           
           ${profitAnalysisSection}
+          ${cashInCounterSection}
         </div>
         
         <div class="footer">

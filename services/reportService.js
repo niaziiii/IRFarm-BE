@@ -11,6 +11,7 @@ import Expense from "../models/expenseModel.js";
 import AppError from "../utils/apiError.js";
 import SaleModel from "../models/saleModel.js";
 import purchaseModel from "../models/purchaseModel.js";
+import { StoreCashBalanceModel } from "../models/CashInCounterModel.js";
 
 class ReportService {
   // Helper function to calculate date range
@@ -937,6 +938,14 @@ class ReportService {
       },
     ]);
 
+    const storeBalance = await StoreCashBalanceModel.findOne({
+      store_id: storeId,
+    }).lean();
+
+    const cashInHand = storeBalance?.cash || 0;
+    const creditBalance = storeBalance?.credit || 0;
+    const currentBalance = storeBalance?.current_balance || 0;
+
     // Process expense data
     const expenseSummary = expenseData.reduce(
       (acc, expense) => {
@@ -1007,6 +1016,12 @@ class ReportService {
           netRevenue > 0
             ? (((netRevenue - totalCosts) / netRevenue) * 100).toFixed(2)
             : 0,
+      },
+      cashInHand: {
+        cash: cashInHand,
+        credit: creditBalance,
+        currentBalance: currentBalance,
+        lastUpdated: storeBalance?.last_updated || null,
       },
     };
   }

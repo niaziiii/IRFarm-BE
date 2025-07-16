@@ -109,8 +109,7 @@ User.pre("remove", async function (next) {
 
       if (store) {
         // Delete all products associated with this store
-        const productIds = store.products.map((p) => p.product_id);
-        await Product.deleteMany({ _id: { $in: productIds } });
+        await Product.deleteMany({ store_id: store._id });
 
         // Delete the store
         await Store.findByIdAndDelete(store._id);
@@ -130,6 +129,10 @@ function autoPopulateRefs(next) {
   this.populate({
     path: "created_by",
     select: "name _id",
+  });
+  this.populate({
+    path: "store_id",
+    select: "name image _id",
   });
   next();
 }

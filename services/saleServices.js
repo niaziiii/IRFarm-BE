@@ -980,7 +980,7 @@ class SaleService {
         added_by: request.user._id,
         date: data.date || new Date(),
         customer_source: data.customer_source || "",
-        salePerson: data.salePerson || "",
+        salePerson: data.salePerson ? data.salePerson : null,
         is_loss_sale: isLossSale,
       };
 
