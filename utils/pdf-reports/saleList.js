@@ -37,12 +37,12 @@ export const generateSaleListReportHTML = (data) => {
         border-radius:3px;
         font-size:11px;
         display:inline-block;
-        margin-left:5px;
+        margin:2px 0;
         text-transform: uppercase;
       ">${label}</span>`;
   };
 
-  const blocks = sales.map((sale) => {
+  const rows = sales.map((sale) => {
     const customer = sale.customer_info || {};
     const items = (sale.sale_items || [])
       .map((item) => {
@@ -65,122 +65,123 @@ export const generateSaleListReportHTML = (data) => {
         : `Cash: ${formatAmount(sale.grand_total)}`;
 
     return `
-        <div class="sale-block">
-          <div class="sale-header">
-            <div class="left">
-              <strong>${sale.sale_number}</strong><br>
-              <small>${formatDate(sale.date)} ${formatTime(sale.date)}</small>
-            </div>
-            <div class="right">
-              ${getBadge(sale.sale_type, sale.sale_type)}
-              ${getBadge(method, method)}
-              ${getBadge(sale.payment_status, sale.payment_status)}
-            </div>
-          </div>
-  
-          <div class="sale-body">
-            <div class="row"><strong>Customer:</strong> ${
-              customer.name || "Walk-in Customer"
-            }
-              <br><small>CNIC: ${customer.cnic || "-"} | Contact: ${
-      customer.contact_no || "-"
-    }</small>
-            </div>
-            <div class="row"><strong>Store:</strong> ${
-              sale.store_details?.name || "-"
-            }</div>
-            <div class="row"><strong>Sales Person:</strong> ${
-              sale.salePerson?.name || "-"
-            }</div>
-            <div class="row"><strong>Created By:</strong> ${
-              sale.added_by?.name || "-"
-            }</div>
-            <div class="row"><strong>Items:</strong><br><div class="items">${items}</div></div>
-            <div class="row"><strong>Total:</strong> ${formatAmount(
-              sale.total_sale_value
-            )}</div>
-            <div class="row"><strong>Discount:</strong> ${formatAmount(
-              sale.discount_value
-            )}</div>
-            <div class="row"><strong>Shipping:</strong> ${formatAmount(
-              sale.shipping_charges
-            )}</div>
-            <div class="row"><strong>Grand Total:</strong> ${formatAmount(
-              sale.grand_total
-            )}</div>
-            <div class="row"><strong>Payment Breakdown:</strong><br>${breakdown}</div>
-            ${
-              sale.note
-                ? `<div class="row"><strong>Note:</strong> ${sale.note}</div>`
-                : ""
-            }
-          </div>
-        </div>
-      `;
+      <tr>
+        <td>${sale.sale_number}<br><small>${formatDate(sale.date)} ${formatTime(
+      sale.date
+    )}</small></td>
+        <td>${customer.name || "Walk-in Customer"}<br><small>CNIC: ${
+      customer.cnic || "-"
+    }<br>Contact: ${customer.contact_no || "-"}</small></td>
+        <td>${sale.store_details?.name || "-"}</td>
+        <td>${sale.salePerson?.name || "-"}</td>
+        <td>${sale.added_by?.name || "-"}</td>
+        <td>${items}</td>
+        <td>${formatAmount(sale.total_sale_value)}</td>
+        <td>${formatAmount(sale.discount_value)}</td>
+        <td>${formatAmount(sale.shipping_charges)}</td>
+        <td>${formatAmount(sale.grand_total)}</td>
+        <td>${breakdown}</td>
+        <td>
+          ${getBadge(sale.sale_type, sale.sale_type)}<br>
+          ${getBadge(method, method)}<br>
+          ${getBadge(sale.payment_status, sale.payment_status)}
+        </td>
+        <td>${sale.note || "-"}</td>
+      </tr>
+    `;
   });
 
   const styles = `
-      <style>
-        body {
-          font-family: 'Segoe UI', sans-serif;
-          font-size: 13px;
-          margin: 0;
-          padding: 20px;
-          background: #f4f4f4;
+    <style>
+      @page {
+        margin: 10mm; /* Remove large default margins */
+      }
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 12px;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+      }
+      .report-header {
+        text-align: center;
+        margin: 0 0 10px 0;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+        page-break-inside: auto;
+      }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 5px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: black;
+        color: #fff;
+        font-size: 12px;
+      }
+      tr:nth-child(even) {
+        background: #f9f9f9;
+      }
+      td small {
+        font-size: 10px;
+        color: #555;
+      }
+      @media print {
+        table {
+          page-break-inside: auto;
         }
-        .report-header {
-          text-align: center;
-          margin-bottom: 20px;
-          border-bottom: 2px solid #000;
-          padding-bottom: 10px;
-        }
-        .sale-block {
-          background: #fff;
-          border: 1px solid #ccc;
-          border-left: 5px solid #007bff;
-          padding: 15px;
-          margin-bottom: 25px;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        tr {
           page-break-inside: avoid;
+          page-break-after: auto;
         }
-        .sale-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 14px;
-          margin-bottom: 10px;
-          flex-wrap: wrap;
+        thead {
+          display: table-header-group;
         }
-        .sale-header .right {
-          text-align: right;
-          flex-shrink: 0;
-          margin-top: 4px;
+        tfoot {
+          display: table-footer-group;
         }
-        .sale-body .row {
-          margin-bottom: 6px;
+        body {
+          margin: 0;
         }
-        .items {
-          line-height: 1.4em;
-          margin-top: 4px;
-          white-space: normal;
-          word-break: break-word;
-        }
-        @media print {
-          .sale-block {
-            page-break-inside: avoid;
-          }
-        }
-      </style>
-    `;
+      }
+    </style>
+  `;
 
   const html = `
-      ${styles}
-      <div class="report-header">
-        <h1>Sale List Report</h1>
-        <div>${formatDate(new Date())} ${formatTime(new Date())}</div>
-      </div>
-      ${blocks.join("")}
-    `;
+    ${styles}
+    <div class="report-header">
+      <h2>Sale List Report</h2>
+      <div>${formatDate(new Date())} ${formatTime(new Date())}</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sale # / Date</th>
+          <th>Customer</th>
+          <th>Store</th>
+          <th>Sales Person</th>
+          <th>Created By</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Discount</th>
+          <th>Shipping</th>
+          <th>Grand Total</th>
+          <th>Payment</th>
+          <th>Badges</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.join("")}
+      </tbody>
+    </table>
+  `;
 
   return html;
 };

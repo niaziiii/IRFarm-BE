@@ -8,6 +8,14 @@ const StoreCashBalanceSchema = new mongoose.Schema(
       required: true,
       unique: true, // One balance record per store
     },
+    cash: {
+      type: Number,
+      default: 0,
+    },
+    credit: {
+      type: Number,
+      default: 0,
+    },
     current_balance: {
       type: Number,
       required: true,
@@ -27,6 +35,13 @@ const CashInCounterSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "Store",
       required: true,
+    },
+
+    cash: { type: Number, default: 0 }, // actual cash
+    credit: { type: Number, default: 0 }, // for tracking online/credit inflow
+    is_system_generated: {
+      type: Boolean,
+      default: false, // Indicates if the transaction was created by the system
     },
     amount: {
       type: Number,

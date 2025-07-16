@@ -5,7 +5,7 @@ export const generateCompanyListReportHTML = (data, options) => {
     amount != null ? Number(amount).toFixed(2) : "0.00";
 
   const formatDate = (dateString) => {
-    if (!dateString) return "?";
+    if (!dateString) return "-";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB");
   };
@@ -126,28 +126,28 @@ export const generateCompanyListReportHTML = (data, options) => {
           <tr>
             <td>${index + 1}</td>
             <td>
-              <div class="company-name">${company.name || "?"}</div>
-              <div class="text-muted">Code: ${company.comp_code || "?"}</div>
+              <div class="company-name">${company.name || "-"}</div>
+              <div class="text-muted">Code: ${company.comp_code || "-"}</div>
               <div class="text-muted">Reg#: ${
-                company.registration_no || "?"
+                company.registration_no || "-"
               }</div>
               ${statusBadge}
             </td>
             <td>
-              ${company.contact_no?.filter(Boolean).join(", ") || "?"}<br>
+              ${company.contact_no?.filter(Boolean).join(", ") || "-"}<br>
               <span class="text-muted">Email: ${
-                company.email_address || "?"
+                company.email_address || "-"
               }</span><br>
               <span class="text-muted">Website: ${
-                company.website || "?"
+                company.website || "-"
               }</span><br>
               <span class="text-muted">Insta: ${
-                company.instagram?.filter(Boolean).join(", ") || "?"
+                company.instagram?.filter(Boolean).join(", ") || "-"
               }</span>
             </td>
             <td>
-              ${address.city || "?"}, ${address.province || "?"}, ${
-        address.country || "?"
+              ${address.city || "-"}, ${address.province || "-"}, ${
+        address.country || "-"
       }
             </td>
             <td>
@@ -163,25 +163,25 @@ export const generateCompanyListReportHTML = (data, options) => {
               )}</span>
             </td>
             <td>
-              ${accountInfo.account_holder_name || "?"}<br>
+              ${accountInfo.account_holder_name || "-"}<br>
               <span class="text-muted">Bank: ${
-                accountInfo.bank_name || "?"
+                accountInfo.bank_name || "-"
               }</span><br>
               <span class="text-muted">IBAN: ${
-                accountInfo.iban || "?"
+                accountInfo.iban || "-"
               }</span><br>
               <span class="text-muted">Branch: ${
-                accountInfo.branch_address || "?"
+                accountInfo.branch_address || "-"
               }</span><br>
               <span class="text-muted">Acc#: ${
-                accountInfo.account_number || "?"
+                accountInfo.account_number || "-"
               }</span><br>
               <span class="text-muted">Expiry: ${formatDate(
                 accountInfo.agreement_expiry_date
               )}</span>
             </td>
             <td>
-              ${creator.name || "?"}<br>
+              ${creator.name || "-"}<br>
               <span class="text-muted">${formatDate(company.createdAt)}</span>
             </td>
             <td>${company.total_products || 0}</td>

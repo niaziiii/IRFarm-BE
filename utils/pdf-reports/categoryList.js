@@ -7,7 +7,7 @@ export const generateCategoryListReportHTML = (data, options) => {
       : "0.00";
 
   const formatDate = (dateString) => {
-    if (!dateString) return "?";
+    if (!dateString) return "-";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB");
   };
@@ -110,9 +110,9 @@ export const generateCategoryListReportHTML = (data, options) => {
   const rows = categories
     .map((category, index) => {
       const creator = category.created_by || {};
-      const creatorName = creator.name || "?";
+      const creatorName = creator.name || "-";
       const creatorImage = creator.image || "";
-      const createdByUser = creator.created_by?.name || "?";
+      const createdByUser = creator.created_by?.name || "-";
       const statusBadge =
         category.status === "active"
           ? `<span class="badge badge-active">Active</span>`

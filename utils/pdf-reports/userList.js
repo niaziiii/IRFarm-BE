@@ -2,7 +2,7 @@ export const generateUserListReportHTML = (data, options) => {
   const users = data || [];
 
   const formatDate = (dateString) => {
-    if (!dateString) return "?";
+    if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("en-GB");
   };
 
@@ -122,11 +122,11 @@ export const generateUserListReportHTML = (data, options) => {
   const rows = users
     .map((user, index) => {
       const creator = user.created_by || {};
-      const grandCreator = creator.created_by?.name || "?";
+      const grandCreator = creator.created_by?.name || "-";
       const address = user.address || {};
-      const fullAddress = `${address.city || "?"}, ${
-        address.province || "?"
-      }, ${address.country || "?"}`;
+      const fullAddress = `${address.city || "-"}, ${
+        address.province || "-"
+      }, ${address.country || "-"}`;
       const imageHTML = user.image
         ? `<img src="${user.image}" class="user-image" />`
         : `<div class="user-image" style="background:#ccc;display:inline-block;text-align:center;line-height:40px;color:#fff;">N/A</div>`;
@@ -141,13 +141,13 @@ export const generateUserListReportHTML = (data, options) => {
             ${getStatusBadge(user.status)}
           </td>
           <td>
-            <div><strong>Email:</strong> ${user.email || "?"}</div>
-            <div><strong>Contact:</strong> ${user.contact_no || "?"}</div>
-            <div><strong>CNIC:</strong> ${user.cnic || "?"}</div>
+            <div><strong>Email:</strong> ${user.email || "-"}</div>
+            <div><strong>Contact:</strong> ${user.contact_no || "-"}</div>
+            <div><strong>CNIC:</strong> ${user.cnic || "-"}</div>
           </td>
           <td>${fullAddress}</td>
           <td>
-            <div><strong>Created by:</strong> ${creator.name || "?"}</div>
+            <div><strong>Created by:</strong> ${creator.name || "-"}</div>
             <div class="text-muted">Senior: ${grandCreator}</div>
             <div class="text-muted">Created: ${formatDate(user.createdAt)}</div>
           </td>

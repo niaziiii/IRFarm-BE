@@ -9,6 +9,7 @@ import {
 import mongoose from "mongoose";
 import { CustomerCreditTransactionModel } from "../models/customerModel.js";
 import notificationService from "./notificationService.js";
+import cashInCounterService from "./cashInCounterService.js";
 
 class SaleService {
   modifyPaymentType(payment_type = {}) {
@@ -982,6 +983,45 @@ class SaleService {
         salePerson: data.salePerson || "",
         is_loss_sale: isLossSale,
       };
+
+      // create cash in hand entry
+      const __amount = {
+        credit: 0,
+        cash: 0,
+      };
+      let __description = "";
+
+      const __payment = this.modifyPaymentType(data.payment_type);
+      if (__payment.type === "cash") {
+        __amount.cash = data.grand_total || 0;
+        __description = `Sale of ${data.grand_total} with cash payment. Note: ${
+          data.note || ""
+        }`;
+      } else if (__payment.type === "credit") {
+        __amount.credit = data.grand_total || 0;
+        __description = `Sale of ${data.grand_total} with credit payment ${
+          data.grand_total || 0
+        }. Note: ${data.note || ""}`;
+      } else if (__payment.type === "split") {
+        __amount.cash = __payment.split.cash_amount || 0;
+        __amount.credit = __payment.split.credit_amount || 0;
+        __description = `Sale of ${
+          data.grand_total
+        } with split payment. Cash: ${__amount.cash}, Credit: ${
+          __amount.credit
+        }. Note: ${data.note || ""}`;
+      }
+
+      __amount.total = data.grand_total || 0;
+
+      cashInCounterService.createTransactionSystemGenerated({
+        amount: __amount,
+        type: "add",
+        description: __description || "Sale transaction",
+        store_id: request.user.store_id,
+        created_by: request.user._id,
+        is_system_generated: true,
+      });
 
       const sale = await SaleModel.create([saleData], { session });
 

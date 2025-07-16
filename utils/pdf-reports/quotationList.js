@@ -1,4 +1,4 @@
-export const generateQuotationListReportHTML = (data, options) => {
+export const generateQuotationListReportHTML = (data) => {
   const quotations = data || [];
 
   const formatCurrency = (val) =>
@@ -22,119 +22,116 @@ export const generateQuotationListReportHTML = (data, options) => {
       credit: "#fd7e14",
       split: "#20c997",
     };
-    return `<span style="background:${
-      colors[type] || "#6c757d"
-    };color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;margin-right:5px;text-transform:uppercase">${label}</span>`;
+    return `<span style="background:${colors[type] || "#6c757d"};
+      color:#fff;
+      padding:2px 8px;
+      border-radius:3px;
+      font-size:11px;
+      text-transform:uppercase;
+      display:inline-block;
+      margin:2px 0;">
+      ${label}
+    </span>`;
   };
 
+  const rows = quotations.map((q) => {
+    const customer = q.customer || {};
+    const items = q.quotation_items
+      .map((item) => {
+        const product = item.product_id || {};
+        return `${product.prod_name || "Unnamed"} (${
+          item.quantity
+        } @ ${formatCurrency(item.sale_price)})`;
+      })
+      .join("<br>");
+
+    const paymentBreakdown = (() => {
+      if (q.payment_type?.type === "split") {
+        return `Cash: ${formatCurrency(q.payment_type.split?.cash_amount)}<br>
+                Credit: ${formatCurrency(q.payment_type.split?.credit_amount)}`;
+      } else if (q.payment_type?.type === "credit") {
+        return `Credit: ${formatCurrency(q.grand_total)}`;
+      } else {
+        return `Cash: ${formatCurrency(q.grand_total)}`;
+      }
+    })();
+
+    return `
+      <tr>
+        <td>${q.quotation_number}<br><small>${formatDate(q.date)} ${formatTime(
+      q.date
+    )}</small></td>
+        <td>${customer.name || "Walk-in Customer"}<br><small>Contact: ${
+      customer.contact_no || "-"
+    }</small></td>
+        <td>${q.store_id?.name || "-"}</td>
+        <td>${q.salePerson?.name || "-"}</td>
+        <td>${q.added_by?.name || "-"}</td>
+        <td>${items}</td>
+        <td>${formatCurrency(q.discount_value)}</td>
+        <td>${formatCurrency(q.shipping_charges)}</td>
+        <td>${formatCurrency(q.grand_total)}</td>
+        <td>${paymentBreakdown}</td>
+        <td>
+          ${badge(q.status, q.status)}<br>
+          ${badge(q.payment_type?.type, q.payment_type?.type)}<br>
+          ${q.converted_to_sale ? badge("Converted", "converted") : ""}
+        </td>
+        <td>${formatDate(q.validity)}</td>
+        <td>${q.note || "-"}</td>
+      </tr>
+    `;
+  });
+
   const styles = `
-      <style>
-        body { font-family: 'Segoe UI', sans-serif; font-size: 13px; margin: 0; padding: 20px; background: #f8f9fa; }
-        .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .report-header h1 { font-size: 24px; margin: 0; }
-        .quote-block { background: #fff; border-left: 5px solid #007bff; margin-bottom: 30px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); page-break-inside: avoid; }
-        .quote-header { display: flex; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; }
-        .quote-header .meta { font-size: 14px; }
-        .quote-body .row { margin-bottom: 10px; }
-        .quote-items { margin-top: 10px; }
-        .quote-items div { margin-bottom: 5px; }
-        .footer { margin-top: 30px; font-size: 12px; color: #666; display: flex; justify-content: space-between; }
-        .note { background: #f1f1f1; padding: 10px; border-left: 3px solid #ccc; font-style: italic; margin-top: 10px; }
-      </style>
-    `;
+    <style>
+      @page { margin: 10mm; }
+      body { font-family: 'Segoe UI', sans-serif; font-size: 12px; margin: 0; padding: 0; background: #fff; }
+      .report-header { text-align: center; margin-bottom: 10px; }
+      table { width: 100%; border-collapse: collapse; margin: 0; page-break-inside: auto; }
+      th, td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; vertical-align: top; }
+      th { background: black; color: #fff; font-size: 12px; }
+      tr:nth-child(even) { background: #f9f9f9; }
+      td small { font-size: 10px; color: #555; }
+      @media print {
+        table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
+        body { margin: 0; }
+      }
+    </style>
+  `;
 
-  const blocks = quotations
-    .map((q) => {
-      const customer = q.customer || {};
-      const items = q.quotation_items
-        .map((item) => {
-          const product = item.product_id || {};
-          return `<div>- ${product.prod_name || "Unnamed"} (${
-            item.quantity
-          } @ ${formatCurrency(item.sale_price)})</div>`;
-        })
-        .join("");
+  const html = `
+    ${styles}
+    <div class="report-header">
+      <h2>Quotation List Report</h2>
+      <div>${formatDate(new Date())} ${formatTime(new Date())}</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Quotation # / Date</th>
+          <th>Customer</th>
+          <th>Store</th>
+          <th>Sales Person</th>
+          <th>Created By</th>
+          <th>Items</th>
+          <th>Discount</th>
+          <th>Shipping</th>
+          <th>Grand Total</th>
+          <th>Payment</th>
+          <th>Badges</th>
+          <th>Validity</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.join("")}
+      </tbody>
+    </table>
+  `;
 
-      const paymentBreakdown = (() => {
-        if (q.payment_type?.type === "split") {
-          return `Cash: ${formatCurrency(
-            q.payment_type.split?.cash_amount
-          )}<br>Credit: ${formatCurrency(q.payment_type.split?.credit_amount)}`;
-        } else if (q.payment_type?.type === "credit") {
-          return `Credit: ${formatCurrency(q.grand_total)}`;
-        } else {
-          return `Cash: ${formatCurrency(q.grand_total)}`;
-        }
-      })();
-
-      return `
-        <div class="quote-block">
-          <div class="quote-header">
-            <div class="meta">
-              <strong>${q.quotation_number}</strong><br>
-              <small>${formatDate(q.date)} ${formatTime(q.date)}</small>
-            </div>
-            <div>
-              ${badge(q.status, q.status)}
-              ${badge(q.payment_type?.type, q.payment_type?.type)}
-              ${q.converted_to_sale ? badge("Converted", "converted") : ""}
-            </div>
-          </div>
-  
-          <div class="quote-body">
-            <div class="row"><strong>Customer:</strong> ${
-              customer.name || "Walk-in Customer"
-            }</div>
-            <div class="row"><strong>Contact:</strong> ${
-              customer.contact_no || "-"
-            }</div>
-            <div class="row"><strong>Store:</strong> ${
-              q.store_id?.name || "-"
-            }</div>
-            <div class="row"><strong>Sales Person:</strong> ${
-              q.salePerson?.name || "-"
-            }</div>
-            <div class="row"><strong>Created By:</strong> ${
-              q.added_by?.name || "-"
-            }</div>
-            <div class="row"><strong>Total Items:</strong> ${
-              q.total_items
-            } | <strong>Total Quantity:</strong> ${q.total_quantity}</div>
-            <div class="row"><strong>Discount:</strong> ${formatCurrency(
-              q.discount_value
-            )} | <strong>Shipping:</strong> ${formatCurrency(
-        q.shipping_charges
-      )}</div>
-            <div class="row"><strong>Grand Total:</strong> ${formatCurrency(
-              q.grand_total
-            )}</div>
-            <div class="row"><strong>Payment Breakdown:</strong><br>${paymentBreakdown}</div>
-            <div class="row"><strong>Validity:</strong> ${formatDate(
-              q.validity
-            )}</div>
-            ${q.note ? `<div class="note">${q.note}</div>` : ""}
-            <div class="quote-items">
-              <strong>Items:</strong>
-              ${items}
-            </div>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-
-  return `
-      ${styles}
-      <div class="report-header">
-        <h1>Quotation List Report</h1>
-        <div>${formatDate(new Date())} ${formatTime(new Date())}</div>
-      </div>
-      ${blocks}
-      <div class="footer">
-        <div>Total Quotations: ${quotations.length}</div>
-        <div>Generated: ${formatDate(new Date())} ${formatTime(
-    new Date()
-  )}</div>
-      </div>
-    `;
+  return html;
 };

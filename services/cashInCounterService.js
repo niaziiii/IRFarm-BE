@@ -9,7 +9,8 @@ import mongoose from "mongoose";
 
 class CashInCounterService {
   async createTransaction(request) {
-    const { amount, type, description, store_id } = request.body;
+    const { amount, type, description, store_id, transaction_type } =
+      request.body;
     const user = request.user;
 
     // Validate user permissions
@@ -30,46 +31,22 @@ class CashInCounterService {
 
     // Verify that the store exists
     const storeExists = await StoreModel.findById(storeId); // Uppercase here too
-    console.log({ storeExists, storeId, store_id });
 
     if (!storeExists) {
       throw new AppError("Store not found", 404);
     }
 
-    // Find or create store balance record
-    let storeBalance = await StoreCashBalanceModel.findOne({
-      store_id: storeId,
-    });
-    if (!storeBalance) {
-      storeBalance = await StoreCashBalanceModel.create({
-        store_id: storeId,
-        current_balance: 0,
-      });
-    }
-
-    // For deductions, check if there's enough cash in the counter
-    if (type === "deduct" && storeBalance.current_balance < amount) {
-      throw new AppError("Insufficient cash in counter", 400);
-    }
-
-    // Update store balance
-    const newBalance =
-      type === "add"
-        ? storeBalance.current_balance + amount
-        : storeBalance.current_balance - amount;
-
-    await StoreCashBalanceModel.findByIdAndUpdate(storeBalance._id, {
-      current_balance: newBalance,
-      last_updated: new Date(),
-    });
-
     // Create the transaction
-    const transaction = await CashInCounterModel.create({
+    const transaction = await this.createTransactionSystemGenerated({
       store_id: storeId,
-      amount,
+      amount: {
+        cash: transaction_type === "cash" ? amount : 0,
+        credit: transaction_type === "credit" ? amount : 0,
+      },
       type,
-      description,
+      description: `Transaction made by System Administrator :  ${description}`,
       created_by: user._id,
+      is_system_generated: false,
     });
 
     // Send notifications to relevant users
@@ -133,10 +110,12 @@ class CashInCounterService {
 
     // Get current store balance
     const storeBalance = await StoreCashBalanceModel.findOne({ store_id });
-    const totalCash = storeBalance ? storeBalance.current_balance : 0;
+    const credit = storeBalance ? storeBalance.credit : 0;
+    const cash = storeBalance ? storeBalance.cash : 0;
 
     return {
-      totalCash,
+      credit,
+      cash,
       transactions,
     };
   }
@@ -235,9 +214,12 @@ class CashInCounterService {
         $project: {
           _id: 1,
           amount: 1,
+          cash: 1,
+          credit: 1,
           type: 1,
           description: 1,
           createdAt: 1,
+          is_system_generated: 1,
           "store.name": { $ifNull: ["$store.name", "Unknown Store"] },
           "created_by.name": { $ifNull: ["$created_by.name", "Unknown User"] },
           "created_by._id": "$created_by._id",
@@ -267,7 +249,8 @@ class CashInCounterService {
         $project: {
           _id: "$store_id", // Use the actual store ID as the _id field
           storeName: { $ifNull: ["$storeInfo.name", "Unknown Store"] },
-          totalCash: "$current_balance",
+          cash: "$cash",
+          credit: "$credit",
         },
       },
     ]);
@@ -329,6 +312,64 @@ class CashInCounterService {
       // Log error but don't fail the transaction
       console.error("Failed to send notifications:", error);
     }
+  }
+
+  async createTransactionSystemGenerated({
+    store_id,
+    amount = { cash: 0, credit: 0, total: 0 },
+    type = "add", // "add" or "deduct"
+    description,
+    created_by,
+    is_system_generated = true, // Default to true for system-generated transactions
+  }) {
+    const { cash = 0, credit = 0, total = 0 } = amount;
+
+    const storeBalance = await StoreCashBalanceModel.findOneAndUpdate(
+      { store_id },
+      {},
+      { upsert: true, new: true }
+    );
+
+    if (type === "add") {
+      storeBalance.cash += cash;
+      storeBalance.credit += credit;
+    } else if (type === "deduct") {
+      // Validate both balances
+      if (cash > 0) {
+        if (storeBalance.cash < cash) {
+          throw new AppError(
+            "Insufficient cash in counter for deduction.",
+            400
+          );
+        }
+        storeBalance.cash -= cash;
+        storeBalance.current_balance -= cash;
+      }
+
+      if (credit > 0) {
+        if (storeBalance.credit < credit) {
+          throw new AppError("Insufficient credit balance for deduction.", 400);
+        }
+        storeBalance.credit -= credit;
+      }
+    } else {
+      throw new AppError("Invalid transaction type.", 400);
+    }
+
+    await storeBalance.save();
+
+    const transaction = await CashInCounterModel.create({
+      store_id,
+      cash: cash,
+      credit: credit,
+      amount: total,
+      type,
+      description,
+      created_by,
+      is_system_generated,
+    });
+
+    return transaction;
   }
 }
 

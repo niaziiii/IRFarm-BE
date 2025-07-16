@@ -2,7 +2,7 @@ export const generateUnitListReportHTML = (data, options) => {
   const units = data || [];
 
   const formatDate = (dateString) =>
-    dateString ? new Date(dateString).toLocaleDateString("en-GB") : "?";
+    dateString ? new Date(dateString).toLocaleDateString("en-GB") : "-";
 
   const getStatusBadge = (status) => {
     return `<span class="badge ${
@@ -124,7 +124,7 @@ export const generateUnitListReportHTML = (data, options) => {
           <td>${unit.unit_type || "-"}</td>
           <td>
             ${creatorImage}
-            ${creator.name || "?"}<br>
+            ${creator.name || "-"}<br>
             <span class="text-muted">Created: ${formatDate(
               unit.createdAt
             )}</span>

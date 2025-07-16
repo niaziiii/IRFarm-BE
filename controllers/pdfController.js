@@ -21,6 +21,7 @@ import { generateQuotationListReportHTML } from "../utils/pdf-reports/quotationL
 import { generateQuotationReportHTML } from "../utils/pdf-reports/quotation.js";
 import { generatePurchaseHistoryReportHTML } from "../utils/pdf-reports/purchaseHistory.js";
 import { generateSaleHistoryReportHTML } from "../utils/pdf-reports/saleHistory.js";
+import { generatePurchaseListReportHTML } from "../utils/pdf-reports/purchaseList.js";
 
 const generateExpenseReport = catchAsync(async (req, res, next) => {
   const { data } = req.body;
@@ -317,6 +318,23 @@ const generateSaleHistoryOverviewReport = catchAsync(async (req, res, next) => {
   return successResponse(res, pdfResult);
 });
 
+const generatePurchaseListReports = catchAsync(async (req, res, next) => {
+  const { data } = req.body;
+  if (!data) {
+    throw new AppError("data is required.", 400);
+  }
+
+  const options = await getStoreInfo(
+    req.user.store_id,
+    req.user.role,
+    "Purchase List"
+  );
+
+  const html = generatePurchaseListReportHTML(data, options);
+  const pdfResult = await pdfService.generatePDFReport(html, options);
+  return successResponse(res, pdfResult);
+});
+
 export default {
   generateExpenseReport,
   generateSaleReport,
@@ -336,4 +354,5 @@ export default {
   generateQuotationReport,
   generatePurchaseHistoryOverviewReport,
   generateSaleHistoryOverviewReport,
+  generatePurchaseListReports,
 };

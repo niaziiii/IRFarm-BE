@@ -2,7 +2,7 @@ const formatAmount = (amount) =>
   amount != null ? Number(amount).toFixed(2) : "0.00";
 
 const formatDate = (dateString) => {
-  if (!dateString) return "?";
+  if (!dateString) return "-";
   const date = new Date(dateString);
   return date.toLocaleDateString("en-GB");
 };
@@ -107,7 +107,7 @@ export const generateCustomerListReportHTML = (data, options) => {
       const account = customer.account || {};
       const address = customer.address || {};
 
-      const customerCode = customer._id ? customer._id.slice(-8) : "?";
+      const customerCode = customer._id ? customer._id.slice(-8) : "-";
 
       const accountTypeBadge =
         account?.type === "credit"
@@ -118,11 +118,11 @@ export const generateCustomerListReportHTML = (data, options) => {
           <tr>
             <td>${index + 1}</td>
             <td>
-              <div class="customer-name">${customer.name || "?"}</div>
+              <div class="customer-name">${customer.name || "-"}</div>
               <div class="text-muted">Code: ${customerCode}</div>
-              <div class="text-muted">CNIC: ${customer.cnic || "?"}</div>
+              <div class="text-muted">CNIC: ${customer.cnic || "-"}</div>
               <div class="text-muted">Contact: ${
-                customer.contact_no || "?"
+                customer.contact_no || "-"
               }</div>
             </td>
             <td>
@@ -138,12 +138,12 @@ export const generateCustomerListReportHTML = (data, options) => {
               )}</span>
             </td> 
             <td>
-              ${customer.reference || "?"}<br>
+              ${customer.reference || "-"}<br>
               <span class="text-muted">${customer.description || ""}</span>
             </td>
             <td>
-              ${address.city || "?"}, ${address.province || "?"}, ${
-        address.country || "?"
+              ${address.city || "-"}, ${address.province || "-"}, ${
+        address.country || "-"
       }
             </td>
           </tr>

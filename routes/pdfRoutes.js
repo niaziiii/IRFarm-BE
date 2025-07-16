@@ -9,6 +9,7 @@ router.post("/purchase", pdfController.generatePurchaseReport);
 router.post("/quotation", pdfController.generateQuotationReport);
 
 router.post("/sales-report", pdfController.generateSaleListReports);
+router.post("/purchase-report", pdfController.generatePurchaseListReports);
 router.post("/customer-ladger", pdfController.generateCustomerLadgerReport);
 router.post("/supplier-ladger", pdfController.generateSupplierLadgerReport);
 router.post("/product-ladger", pdfController.generateProductLadgerReport);
