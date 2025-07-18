@@ -130,10 +130,10 @@ function autoPopulateRefs(next) {
     path: "created_by",
     select: "name _id",
   });
-  this.populate({
-    path: "store_id",
-    select: "name image _id",
-  });
+  // this.populate({
+  //   path: "store_id",
+  //   select: "name image _id",
+  // });
   next();
 }
 

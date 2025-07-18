@@ -3,6 +3,7 @@ import storeRepository from "../repositories/storeRepository.js";
 import AppError from "../utils/apiError.js";
 import notificationService from "./notificationService.js";
 import userModel from "../models/userModel.js";
+
 class UserService {
   async createUser(request) {
     let userData = request.body;
@@ -76,17 +77,17 @@ class UserService {
     // return categories;
     if (user.role === "super_admin") {
       if (role != "all") query.role = role;
-      return await userRepository.find({
-        filterQuery: { _id: { $ne: user._id }, ...query },
-        sortParams: sortParams,
-      });
+      return await userModel
+        .find({ _id: { $ne: user._id }, ...query })
+        .sort(sortParams)
+        .populate({
+          path: "store_id",
+          select: "name image _id",
+        });
     } else {
-      return await userRepository.find({
-        filterQuery: { store_id: user.store_id, role: "user", ...query },
-        sortParams: sortParams,
-        // store_id: user.store_id,
-        // role: "user",
-      });
+      return await userModel
+        .find({ store_id: user.store_id, role: "user", ...query })
+        .sort(sortParams);
     }
   }
 
