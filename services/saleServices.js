@@ -997,11 +997,6 @@ class SaleService {
         __description = `Sale of ${data.grand_total} with cash payment. Note: ${
           data.note || ""
         }`;
-      } else if (__payment.type === "credit") {
-        __amount.credit = data.grand_total || 0;
-        __description = `Sale of ${data.grand_total} with credit payment ${
-          data.grand_total || 0
-        }. Note: ${data.note || ""}`;
       } else if (__payment.type === "split") {
         __amount.cash = __payment.split.cash_amount || 0;
         __amount.credit = __payment.split.credit_amount || 0;
@@ -1012,10 +1007,9 @@ class SaleService {
         }. Note: ${data.note || ""}`;
       }
 
-      __amount.total = data.grand_total || 0;
-
       cashInCounterService.createTransactionSystemGenerated({
-        amount: __amount,
+        amount: __amount.cash,
+        transaction_type: "Sale",
         type: "add",
         description: __description || "Sale transaction",
         store_id: request.user.store_id,

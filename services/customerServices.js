@@ -4,6 +4,7 @@ import customerModel, {
   CustomerCreditTransactionModel,
 } from "../models/customerModel.js";
 import AppError from "../utils/apiError.js";
+import cashInCounterService from "./cashInCounterService.js";
 
 class CustomerService {
   async createCustomer(request) {
@@ -444,6 +445,18 @@ class CustomerService {
         },
         { session, new: true }
       );
+
+      if (paymentTransaction.payment_type == "cash") {
+        cashInCounterService.createTransactionSystemGenerated({
+          transaction_type: "Customer Ladger",
+          amount: balance,
+          type: type === "add" ? "add" : "deduct",
+          description: ` Customer (${updatedCustomer.name}) Ladger transcation. Note: ${paymentTransaction.note}`,
+          store_id: request.user.store_id,
+          created_by: request.user._id,
+          is_system_generated: true,
+        });
+      }
 
       await session.commitTransaction();
 

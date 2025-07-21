@@ -17,7 +17,9 @@ class CashInCounterService {
     if (type === "deduct" && user.role === "user") {
       throw new AppError("You don't have permission to deduct cash", 403);
     }
-
+    if (transaction_type !== "cash") {
+      throw new AppError("Only cash transcation supported", 403);
+    }
     // Determine the store_id based on user role
     let storeId = store_id;
 
@@ -37,12 +39,11 @@ class CashInCounterService {
     }
 
     // Create the transaction
+
     const transaction = await this.createTransactionSystemGenerated({
       store_id: storeId,
-      amount: {
-        cash: transaction_type === "cash" ? amount : 0,
-        credit: transaction_type === "credit" ? amount : 0,
-      },
+      amount: transaction_type === "cash" ? amount : 0,
+      transaction_type: "Cash In Hand Adjustment",
       type,
       description: `Transaction made by System Administrator :  ${description}`,
       created_by: user._id,
@@ -316,14 +317,13 @@ class CashInCounterService {
 
   async createTransactionSystemGenerated({
     store_id,
-    amount = { cash: 0, credit: 0, total: 0 },
+    amount = 0,
     type = "add", // "add" or "deduct"
     description,
     created_by,
-    is_system_generated = true, // Default to true for system-generated transactions
+    is_system_generated = true,
+    transaction_type = "",
   }) {
-    const { cash = 0, credit = 0, total = 0 } = amount;
-
     const storeBalance = await StoreCashBalanceModel.findOneAndUpdate(
       { store_id },
       {},
@@ -331,26 +331,17 @@ class CashInCounterService {
     );
 
     if (type === "add") {
-      storeBalance.cash += cash;
-      storeBalance.credit += credit;
+      storeBalance.cash += amount;
     } else if (type === "deduct") {
       // Validate both balances
-      if (cash > 0) {
-        if (storeBalance.cash < cash) {
+      if (amount > 0) {
+        if (storeBalance.cash < amount) {
           throw new AppError(
             "Insufficient cash in counter for deduction.",
             400
           );
         }
-        storeBalance.cash -= cash;
-        storeBalance.current_balance -= cash;
-      }
-
-      if (credit > 0) {
-        if (storeBalance.credit < credit) {
-          throw new AppError("Insufficient credit balance for deduction.", 400);
-        }
-        storeBalance.credit -= credit;
+        storeBalance.cash -= amount;
       }
     } else {
       throw new AppError("Invalid transaction type.", 400);
@@ -360,12 +351,11 @@ class CashInCounterService {
 
     const transaction = await CashInCounterModel.create({
       store_id,
-      cash: cash,
-      credit: credit,
-      amount: total,
+      amount: amount,
       type,
       description,
       created_by,
+      transaction_type,
       is_system_generated,
     });
 

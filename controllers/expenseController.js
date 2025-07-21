@@ -1,4 +1,5 @@
 import expenseModel, { expenseCategoryModel } from "../models/expenseModel.js";
+import cashInCounterService from "../services/cashInCounterService.js";
 import notificationService from "../services/notificationService.js";
 import AppError from "../utils/apiError.js";
 import catchAsync from "../utils/catchAsync.js";
@@ -20,6 +21,17 @@ const createExpense = catchAsync(async (req, res, next) => {
     },
     req.user._id
   );
+
+  if (expense.paymentMethod === "cash") {
+    cashInCounterService.createTransactionSystemGenerated({
+      amount: expense.amount,
+      type: "deduct",
+      description: expense.description || "Expense transaction",
+      store_id: req.user.store_id,
+      created_by: req.user._id,
+      is_system_generated: true,
+    });
+  }
   return successResponse(res, expense);
 });
 
@@ -74,11 +86,54 @@ const updateExpense = catchAsync(async (req, res, next) => {
     return next(new AppError("Expense not found", 404));
   }
 
-  // Fields that should not be updated directly
+  const previousAmount = expense.amount;
+  const previousPaymentMethod = expense.paymentMethod;
+
   const restrictedFields = ["created_by", "store_id", "createdAt", "updatedAt"];
   restrictedFields.forEach((field) => delete req.body[field]);
 
-  // Update the expense
+  const newAmount = req.body.amount ?? expense.amount;
+  const newPaymentMethod = req.body.paymentMethod ?? expense.paymentMethod;
+
+  // Cash adjustment logic
+  if (previousPaymentMethod === "cash" && newPaymentMethod === "cash") {
+    const amountDifference = newAmount - previousAmount;
+    if (amountDifference !== 0) {
+      await cashInCounterService.createTransactionSystemGenerated({
+        amount: Math.abs(amountDifference),
+        type: amountDifference > 0 ? "deduct" : "add",
+        transaction_type: "Expense",
+        description: "Expense amount adjusted",
+        store_id: expense.store_id,
+        created_by: req.user._id,
+        is_system_generated: true,
+      });
+    }
+  } else if (previousPaymentMethod === "cash" && newPaymentMethod !== "cash") {
+    // Refund full previous amount
+    await cashInCounterService.createTransactionSystemGenerated({
+      amount: previousAmount,
+      type: "add",
+      transaction_type: "Expense",
+      description: "Expense method changed: cash refunded",
+      store_id: expense.store_id,
+      created_by: req.user._id,
+      is_system_generated: true,
+    });
+  } else if (previousPaymentMethod !== "cash" && newPaymentMethod === "cash") {
+    // Deduct full new amount
+    await cashInCounterService.createTransactionSystemGenerated({
+      amount: newAmount,
+      type: "deduct",
+      transaction_type: "Expense",
+      description: "Expense method changed: cash deducted",
+      store_id: expense.store_id,
+      created_by: req.user._id,
+      is_system_generated: true,
+    });
+  }
+
+  // Proceed to update the expense
   const updatedExpense = await expenseModel.findByIdAndUpdate(
     req.params.id,
     req.body,
