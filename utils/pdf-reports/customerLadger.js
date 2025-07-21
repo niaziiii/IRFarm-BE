@@ -172,6 +172,42 @@ const formatAmount = (amount) => {
   return Number(amount).toFixed(2);
 };
 
+const generateSummarySection = (data) => {
+  const creditLimit = data.summary?.credit_limit || 0;
+  const usedAmount = data.summary?.used_amount || 0;
+  const balance = (data.summary?.balance || 0) - data.summary?.used_amount;
+  const availableCredit = creditLimit - usedAmount;
+
+  return `
+      <div class="summary-box">
+        <div class="summary-title">Account Summary</div>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">Cash Used</div>
+            <div class="summary-value">PKR ${formatAmount(
+              data.summary?.total_cash_used || 0
+            )}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Credit Used</div>
+            <div class="summary-value negative">PKR ${formatAmount(
+              data.summary?.total_credit_used || 0
+            )}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Current Balance</div>
+            <div class="summary-value primary">PKR ${formatAmount(
+              balance
+            )}</div>
+          </div> 
+          <div class="summary-item">
+            <div class="summary-label">Total Transactions</div>
+            <div class="summary-value">${data.transactions?.length || 0}</div>
+          </div>
+        </div>
+      </div>
+    `;
+};
 const generateTransactionsTableHTML = (data) => {
   if (
     !data.transactions ||
@@ -313,6 +349,8 @@ export const generateCustomerLadgerReportHTML = (data, options) => {
   // Generate the transactions table HTML
   const transactionsTableHTML = generateTransactionsTableHTML(data);
 
+  const summarySectionHTML = generateSummarySection(data);
+
   // Customer code - use the last 8 characters of the customer ID
   const customerCode = customerData._id
     ? customerData._id.substring(customerData._id.length - 8)
@@ -336,7 +374,7 @@ export const generateCustomerLadgerReportHTML = (data, options) => {
             }</div>
           </div> 
         </div>
-        
+        ${summarySectionHTML}
         ${transactionsTableHTML} 
       </div>
     `;

@@ -125,10 +125,9 @@ class StoreService {
             created_by: 1,
             createdAt: 1,
             updatedAt: 1,
-            // Don't mix inclusion and exclusion in the same $project
-            // So instead of excluding, we just don't include these fields
-            // managers: 0,
-            // creator: 0,
+            status: 1,
+            email: 1,
+            phone: 1,
           },
         },
         {

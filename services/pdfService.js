@@ -56,8 +56,6 @@ class PDFService {
     }
   }
 
-  // <p>Phone: ${storeInfo.phone || ""}</p>
-  // <p>Email: ${storeInfo.email || ""}</p>
   // Generate store info header HTML
   generateStoreInfoHTML(storeInfo) {
     return `
@@ -67,6 +65,8 @@ class PDFService {
       storeInfo.name || "IRFARM"
     } Logo" class="store-logo" style="max-width: 100px; height: 100px;" />
           <h1 class="store-name">${storeInfo.name || "IRFARM"}</h1>
+          <p>Phone: ${storeInfo.phone || ""}</p>
+          <p>Email: ${storeInfo.email || ""}</p>
           <div class="store-details">
             <p>${storeInfo.address || ""}</p>
           </div>

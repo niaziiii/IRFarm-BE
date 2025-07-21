@@ -24,7 +24,7 @@ const Store = new mongoose.Schema(
     },
     email: {
       type: String,
-      default: "contact@mail.com",
+      default: "store@mail.com",
     },
   },
   { timestamps: true }
