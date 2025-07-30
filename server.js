@@ -39,12 +39,12 @@ const startServer = async () => {
     await connectDB(connectionString);
     console.log("✅ Database connected successfully");
 
-    if (process.env.NODE_ENV === "development") {
-      server.listen(port, () => {
-        console.log(`🚀 Server running on port ${port}`);
-        console.log(`📱 WebSocket server is ready`);
-      });
-    }
+    // if (process.env.NODE_ENV === "development") {
+    server.listen(port, () => {
+      console.log(`🚀 Server running on port ${port}`);
+      console.log(`📱 WebSocket server is ready`);
+    });
+    // }
   } catch (error) {
     console.error("❌ Server startup error:", error);
     process.exit(1);
