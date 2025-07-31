@@ -128,9 +128,26 @@ class PDFService {
   async generatePDFFromHTML(htmlContent) {
     let browser;
     try {
-      // Check if we're in AWS App Runner environment
-      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-        // Use system chromium in AWS App Runner
+      console.log("NODE_ENV:", process.env.NODE_ENV);
+      console.log(
+        "PUPPETEER_EXECUTABLE_PATH:",
+        process.env.PUPPETEER_EXECUTABLE_PATH
+      );
+
+      if (process.env.NODE_ENV === "development") {
+        // Use regular puppeteer in development
+        console.log("Using regular puppeteer for development");
+        const regularPuppeteer = await import("puppeteer");
+        browser = await regularPuppeteer.default.launch({
+          headless: true,
+          args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        });
+      } else if (
+        process.env.NODE_ENV === "production" &&
+        process.env.PUPPETEER_EXECUTABLE_PATH
+      ) {
+        // Use system Google Chrome in AWS App Runner production
+        console.log("Using system Google Chrome for AWS App Runner");
         browser = await puppeteer.launch({
           executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
           headless: true,
@@ -139,19 +156,13 @@ class PDFService {
             "--disable-setuid-sandbox",
             "--disable-dev-shm-usage",
             "--disable-gpu",
-            "--single-process",
-            "--no-zygote",
+            "--disable-web-security",
+            "--disable-features=VizDisplayCompositor",
           ],
         });
-      } else if (process.env.NODE_ENV === "development") {
-        // Use regular puppeteer in development
-        const regularPuppeteer = await import("puppeteer");
-        browser = await regularPuppeteer.default.launch({
-          headless: true,
-          args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
       } else {
-        // Use @sparticuz/chromium for Vercel/serverless
+        // Use @sparticuz/chromium for Vercel/other serverless
+        console.log("Using @sparticuz/chromium for serverless");
         browser = await puppeteer.launch({
           args: chromium.args,
           defaultViewport: chromium.defaultViewport,
@@ -179,6 +190,7 @@ class PDFService {
 
       return pdfBuffer;
     } catch (error) {
+      console.error("PDF generation error:", error);
       throw new Error(`PDF generation error: ${error.message}`);
     } finally {
       if (browser) {
