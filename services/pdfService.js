@@ -129,50 +129,34 @@ class PDFService {
     let browser;
     try {
       console.log("NODE_ENV:", process.env.NODE_ENV);
-      console.log(
-        "PUPPETEER_EXECUTABLE_PATH:",
-        process.env.PUPPETEER_EXECUTABLE_PATH
-      );
+      console.log("Running on AWS App Runner");
 
-      if (process.env.NODE_ENV === "development") {
-        // Use regular puppeteer in development
-        console.log("Using regular puppeteer for development");
-        const regularPuppeteer = await import("puppeteer");
-        browser = await regularPuppeteer.default.launch({
-          headless: true,
-          args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
-      } else if (
-        process.env.NODE_ENV === "production" &&
-        process.env.PUPPETEER_EXECUTABLE_PATH
-      ) {
-        // Use system Google Chrome in AWS App Runner production
-        console.log("Using system Google Chrome for AWS App Runner");
-        browser = await puppeteer.launch({
-          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-          headless: true,
-          args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--disable-web-security",
-            "--disable-features=VizDisplayCompositor",
-          ],
-        });
-      } else {
-        // Use @sparticuz/chromium for Vercel/other serverless
-        console.log("Using @sparticuz/chromium for serverless");
-        browser = await puppeteer.launch({
-          args: chromium.args,
-          defaultViewport: chromium.defaultViewport,
-          executablePath: await chromium.executablePath(),
-          headless: chromium.headless,
-          ignoreHTTPSErrors: true,
-        });
-      }
+      // For AWS App Runner, always use @sparticuz/chromium
+      // It's specifically designed for serverless environments
+      browser = await puppeteer.launch({
+        args: [
+          ...chromium.args,
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-gpu",
+          "--no-first-run",
+          "--no-zygote",
+          "--single-process",
+          "--disable-extensions",
+        ],
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: true,
+        ignoreHTTPSErrors: true,
+      });
 
       const page = await browser.newPage();
+
+      // Set timeout for page operations
+      page.setDefaultNavigationTimeout(30000);
+      page.setDefaultTimeout(30000);
+
       await page.setContent(htmlContent, {
         waitUntil: "networkidle0",
       });
