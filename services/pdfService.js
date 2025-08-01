@@ -2,8 +2,7 @@ import AWS from "aws-sdk";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
 import path from "path";
-import { jsPDF } from "jspdf";
-// import html2canvas from "html2canvas";
+import pdf from "html-pdf-node";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,103 +22,206 @@ class PDFService {
   // Main method to generate expense report PDF
   async generatePDFReport(data, options) {
     try {
-      // Generate PDF using jsPDF (no browser required)
-      const doc = new jsPDF();
+      // Generate complete HTML content
+      const htmlContent = this.generateCompleteHTML(data, options);
 
-      // Add header
-      doc.setFontSize(20);
-      doc.text(options.storeInfo.name || "IRFARM", 105, 20, {
-        align: "center",
-      });
+      // Options for PDF generation
+      const pdfOptions = {
+        format: "A4",
+        printBackground: true,
+        margin: {
+          top: "20px",
+          right: "20px",
+          bottom: "20px",
+          left: "20px",
+        },
+        preferCSSPageSize: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      };
 
-      doc.setFontSize(12);
-      doc.text(options.storeInfo.phone || "", 105, 30, { align: "center" });
-      doc.text(options.storeInfo.email || "", 105, 40, { align: "center" });
-      doc.text(options.storeInfo.address || "", 105, 50, { align: "center" });
+      // Generate PDF from HTML
+      const file = { content: htmlContent };
+      const pdfBuffer = await pdf.generatePdf(file, pdfOptions);
 
-      // Add a line separator
-      doc.line(20, 60, 190, 60);
-
-      // Add title
-      doc.setFontSize(16);
-      doc.text(options.title || "Expense Report", 105, 75, { align: "center" });
-
-      // Parse and add the HTML content as text
-      // This is a simplified version - you might need to parse the HTML data
-      doc.setFontSize(10);
-      const lines = this.parseHTMLToText(data);
-      let yPosition = 90;
-
-      lines.forEach((line) => {
-        if (yPosition > 270) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        doc.text(line, 20, yPosition);
-        yPosition += 7;
-      });
-
-      // Convert to buffer
-      const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
       const fileName = `expense-report-${uuidv4()}.pdf`;
 
       // Upload to S3
       const url = await this.uploadToS3(pdfBuffer, fileName);
       return { url };
     } catch (error) {
+      console.error("PDF Generation Error:", error);
       throw new Error(`PDF generation failed: ${error.message}`);
     }
   }
 
-  // Simple HTML parser (you can enhance this based on your needs)
-  parseHTMLToText(html) {
-    // Remove HTML tags and split into lines
-    const text = html
-      .replace(/<[^>]*>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    const words = text.split(" ");
-    const lines = [];
-    let currentLine = "";
+  // Generate complete HTML with embedded styles
+  generateCompleteHTML(data, options) {
+    const storeInfoHTML = this.generateStoreInfoHTML(options.storeInfo);
 
-    words.forEach((word) => {
-      if ((currentLine + " " + word).length > 80) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = currentLine ? currentLine + " " + word : word;
-      }
-    });
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-
-    return lines;
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${options.title || "Expense Report"}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.4;
+              color: #333;
+              padding: 20px;
+            }
+            
+            .store-header {
+              background-color: #3EB5AF;
+              color: black;
+              padding: 20px;
+              margin-bottom: 20px;
+              text-align: center;
+              border-radius: 8px;
+            }
+            
+            .store-info {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+            
+            .store-logo {
+              max-width: 100px;
+              height: 100px;
+              margin-bottom: 10px;
+            }
+            
+            .store-name {
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            
+            .store-details p {
+              margin: 5px 0;
+              font-size: 14px;
+            }
+            
+            .content {
+              margin: 0 20px;
+            }
+            
+            /* Table styles */
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 10px 0;
+            }
+            
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            
+            /* List styles */
+            ul, ol {
+              margin-left: 20px;
+              margin-bottom: 10px;
+            }
+            
+            li {
+              margin-bottom: 5px;
+            }
+            
+            /* Text styles */
+            h1, h2, h3, h4, h5, h6 {
+              margin: 15px 0 10px 0;
+              color: #2c3e50;
+            }
+            
+            p {
+              margin-bottom: 10px;
+            }
+            
+            .highlight {
+              background-color: #ffeb3b;
+              padding: 2px 4px;
+            }
+            
+            .text-center {
+              text-align: center;
+            }
+            
+            .text-right {
+              text-align: right;
+            }
+            
+            .font-bold {
+              font-weight: bold;
+            }
+            
+            .mt-20 {
+              margin-top: 20px;
+            }
+            
+            .mb-20 {
+              margin-bottom: 20px;
+            }
+            
+            @media print {
+              body {
+                padding: 0;
+              }
+              
+              .store-header {
+                background-color: #3EB5AF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${storeInfoHTML}
+          <div class="content">
+            ${data}
+          </div>
+        </body>
+      </html>
+    `;
   }
 
-  // Generate store info header HTML (kept for compatibility)
+  // Generate store info header HTML
   generateStoreInfoHTML(storeInfo) {
     return `
       <div class="store-header">
         <div class="store-info">
+          ${
+            storeInfo.logo
+              ? `<img src="${storeInfo.logo}" alt="${
+                  storeInfo.name || "IRFARM"
+                } Logo" class="store-logo" />`
+              : ""
+          }
           <h1 class="store-name">${storeInfo.name || "IRFARM"}</h1>
-          <p>Phone: ${storeInfo.phone || ""}</p>
-          <p>Email: ${storeInfo.email || ""}</p>
-          <div class="store-details">
-            <p>${storeInfo.address || ""}</p>
-          </div>
+          ${storeInfo.phone ? `<p>Phone: ${storeInfo.phone}</p>` : ""}
+          ${storeInfo.email ? `<p>Email: ${storeInfo.email}</p>` : ""}
+          ${storeInfo.address ? `<p>${storeInfo.address}</p>` : ""}
         </div>
       </div>
-    `;
-  }
-
-  // Get common CSS styles (kept for compatibility)
-  getCommonStyles() {
-    return `
-      <style>
-        /* Styles kept for compatibility */
-      </style>
     `;
   }
 
