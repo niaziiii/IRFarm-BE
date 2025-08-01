@@ -1,9 +1,9 @@
-import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
 import AWS from "aws-sdk";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
 import path from "path";
+import { jsPDF } from "jspdf";
+// import html2canvas from "html2canvas";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,31 +22,48 @@ class PDFService {
 
   // Main method to generate expense report PDF
   async generatePDFReport(data, options) {
-    const storeInfoHTML = this.generateStoreInfoHTML(options.storeInfo);
-
     try {
-      // Generate HTML content
-      const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>${options.title || "Expense Report"}</title>
-          ${this.getCommonStyles()}
-        </head>
-        <body>
-          ${storeInfoHTML}
-          <div class="content">
-           ${data}
-          </div>
-        </body>
-      </html>
-    `;
+      // Generate PDF using jsPDF (no browser required)
+      const doc = new jsPDF();
 
-      const pdfBuffer = await this.generatePDFFromHTML(htmlContent);
+      // Add header
+      doc.setFontSize(20);
+      doc.text(options.storeInfo.name || "IRFARM", 105, 20, {
+        align: "center",
+      });
+
+      doc.setFontSize(12);
+      doc.text(options.storeInfo.phone || "", 105, 30, { align: "center" });
+      doc.text(options.storeInfo.email || "", 105, 40, { align: "center" });
+      doc.text(options.storeInfo.address || "", 105, 50, { align: "center" });
+
+      // Add a line separator
+      doc.line(20, 60, 190, 60);
+
+      // Add title
+      doc.setFontSize(16);
+      doc.text(options.title || "Expense Report", 105, 75, { align: "center" });
+
+      // Parse and add the HTML content as text
+      // This is a simplified version - you might need to parse the HTML data
+      doc.setFontSize(10);
+      const lines = this.parseHTMLToText(data);
+      let yPosition = 90;
+
+      lines.forEach((line) => {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        doc.text(line, 20, yPosition);
+        yPosition += 7;
+      });
+
+      // Convert to buffer
+      const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
       const fileName = `expense-report-${uuidv4()}.pdf`;
 
-      // Production logic (e.g., upload to S3)
+      // Upload to S3
       const url = await this.uploadToS3(pdfBuffer, fileName);
       return { url };
     } catch (error) {
@@ -54,14 +71,38 @@ class PDFService {
     }
   }
 
-  // Generate store info header HTML
+  // Simple HTML parser (you can enhance this based on your needs)
+  parseHTMLToText(html) {
+    // Remove HTML tags and split into lines
+    const text = html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const words = text.split(" ");
+    const lines = [];
+    let currentLine = "";
+
+    words.forEach((word) => {
+      if ((currentLine + " " + word).length > 80) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = currentLine ? currentLine + " " + word : word;
+      }
+    });
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines;
+  }
+
+  // Generate store info header HTML (kept for compatibility)
   generateStoreInfoHTML(storeInfo) {
     return `
       <div class="store-header">
         <div class="store-info">
-          <img  src="${storeInfo.logo || ""}" alt="${
-      storeInfo.name || "IRFARM"
-    } Logo" class="store-logo" style="max-width: 100px; height: 100px;" />
           <h1 class="store-name">${storeInfo.name || "IRFARM"}</h1>
           <p>Phone: ${storeInfo.phone || ""}</p>
           <p>Email: ${storeInfo.email || ""}</p>
@@ -73,130 +114,13 @@ class PDFService {
     `;
   }
 
-  // Get common CSS styles for expense report PDF
+  // Get common CSS styles (kept for compatibility)
   getCommonStyles() {
     return `
       <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.4;
-          color: #333;
-          padding: 20px;
-        }
-        
-        .store-header {
-          background-color: #3EB5AF;
-          color: black;
-          padding: 10px;
-          margin-bottom: 20px;
-          text-align: center;
-        }
-        
-        .store-name {
-          font-size: 24px;
-          font-weight: bold;
-          margin-bottom: 10px;
-        }
-        
-        .store-details p {
-          margin: 5px 0;
-          font-size: 14px;
-        }
-        
-        .content {
-          margin: 0 20px;
-        }
-        
-        @media print {
-          body {
-            padding: 0;
-          } 
-        }
+        /* Styles kept for compatibility */
       </style>
     `;
-  }
-
-  // Convert HTML to PDF using Puppeteer
-  async generatePDFFromHTML(htmlContent) {
-    let browser;
-    try {
-      let options;
-
-      // Check if we're using the official Puppeteer Docker image
-      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-        console.log("Using system Chrome from Docker image");
-        options = {
-          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-          args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--no-first-run",
-            "--no-zygote",
-            "--disable-extensions",
-          ],
-          headless: true,
-          ignoreHTTPSErrors: true,
-        };
-      } else {
-        console.log("Using @sparticuz/chromium");
-        options = {
-          args: [
-            ...chromium.args,
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--no-first-run",
-            "--no-zygote",
-            "--single-process",
-            "--disable-extensions",
-          ],
-          defaultViewport: chromium.defaultViewport,
-          executablePath: await chromium.executablePath(),
-          headless: true,
-          ignoreHTTPSErrors: true,
-        };
-      }
-
-      browser = await puppeteer.launch(options);
-      const page = await browser.newPage();
-
-      // Set timeout for page operations
-      page.setDefaultNavigationTimeout(30000);
-      page.setDefaultTimeout(30000);
-
-      await page.setContent(htmlContent, {
-        waitUntil: "networkidle0",
-      });
-
-      const pdfBuffer = await page.pdf({
-        format: "A4",
-        printBackground: true,
-        margin: {
-          top: "20px",
-          right: "20px",
-          bottom: "20px",
-          left: "20px",
-        },
-      });
-
-      return pdfBuffer;
-    } catch (error) {
-      console.error("PDF generation error:", error);
-      throw new Error(`PDF generation error: ${error.message}`);
-    } finally {
-      if (browser) {
-        await browser.close();
-      }
-    }
   }
 
   // Upload PDF buffer to S3
@@ -207,7 +131,6 @@ class PDFService {
         Key: `pdfs/${fileName}`,
         Body: pdfBuffer,
         ContentType: "application/pdf",
-        // ACL: "public-read", // Make file publicly accessible
       };
 
       const result = await s3.upload(uploadParams).promise();

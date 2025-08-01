@@ -1,13 +1,11 @@
 version: 1.0
-runtime: docker
+runtime: nodejs20
 build:
   commands:
-    pre-build:
-      - echo "Installing build dependencies"
     build:
-      - echo "Building Docker image"
+      - npm install
 run:
-  runtime-version: latest
+  runtime-version: 20
   command: npm start
   network:
     port: 8000
