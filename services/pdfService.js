@@ -2,10 +2,8 @@ import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import AWS from "aws-sdk";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import path from "path";
-import os from "os";
 import { fileURLToPath } from "url";
+import path from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -128,29 +126,47 @@ class PDFService {
   async generatePDFFromHTML(htmlContent) {
     let browser;
     try {
-      console.log("NODE_ENV:", process.env.NODE_ENV);
-      console.log("Running on AWS App Runner");
+      let options;
 
-      // For AWS App Runner, always use @sparticuz/chromium
-      // It's specifically designed for serverless environments
-      browser = await puppeteer.launch({
-        args: [
-          ...chromium.args,
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-gpu",
-          "--no-first-run",
-          "--no-zygote",
-          "--single-process",
-          "--disable-extensions",
-        ],
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
-        headless: true,
-        ignoreHTTPSErrors: true,
-      });
+      // Check if we're using the official Puppeteer Docker image
+      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        console.log("Using system Chrome from Docker image");
+        options = {
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+          args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--no-first-run",
+            "--no-zygote",
+            "--disable-extensions",
+          ],
+          headless: true,
+          ignoreHTTPSErrors: true,
+        };
+      } else {
+        console.log("Using @sparticuz/chromium");
+        options = {
+          args: [
+            ...chromium.args,
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--no-first-run",
+            "--no-zygote",
+            "--single-process",
+            "--disable-extensions",
+          ],
+          defaultViewport: chromium.defaultViewport,
+          executablePath: await chromium.executablePath(),
+          headless: true,
+          ignoreHTTPSErrors: true,
+        };
+      }
 
+      browser = await puppeteer.launch(options);
       const page = await browser.newPage();
 
       // Set timeout for page operations
