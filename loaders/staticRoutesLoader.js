@@ -22,7 +22,7 @@ const staticRouteLoader = async (app) => {
 
   // Example starter route
   app.use("/starter", (req, res) => {
-    res.send("Hello, This is a starter route!!! new");
+    res.send("Hello, This is a starter route! new");
   });
 };
 

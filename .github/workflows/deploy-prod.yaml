@@ -34,6 +34,9 @@ jobs:
           nvm use 22.12.0
           cd ~/IRFarm-BE
           git pull origin master
-          npm ci
-          pm2 restart server
+
+          rm -rf node_modules
+          npm install --production --no-audit --no-fund
+
+          pm2 restart all || pm2 start server.js --name "server"
           EOF
